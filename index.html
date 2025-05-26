@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Дневен режим на бебето</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
    <style>
         * {
             margin: 0;
@@ -336,112 +339,117 @@
 
   <div class="summary" id="summary"></div>
 
- <script>
-  const form = document.getElementById('entryForm');
-  const tableBody = document.getElementById('dataTable').querySelector('tbody');
-  const summary = document.getElementById('summary');
-  const dateInput = document.querySelector('input[name="date"]');
+    <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// Ако искаш и analytics, добави:
+ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 
-  function setTodayDate() {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.value = today;
-  }
+const firebaseConfig = {
+  apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
+  authDomain: "baby-tracker-fab40.firebaseapp.com",
+  projectId: "baby-tracker-fab40",
+  storageBucket: "baby-tracker-fab40.appspot.com",
+  messagingSenderId: "60430088674",
+  appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
+  measurementId: "G-3EESV4H39C"
+};
 
-  window.addEventListener('load', () => {
-    setTodayDate();
-  });
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const collectionRef = collection(db, "babyData");
+// const analytics = getAnalytics(app);  // ако искаш analytics
 
-  form.addEventListener('reset', () => {
-    setTodayDate();
-  });
+const form = document.getElementById('entryForm');
+const tableBody = document.getElementById('dataTable').querySelector('tbody');
+const summary = document.getElementById('summary');
+const dateInput = document.querySelector('input[name="date"]');
 
-  let data = JSON.parse(localStorage.getItem('babyData')) || [];
+function setTodayDate() {
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.value = today;
+}
 
-  // Обновяме таблицата при смяна на датата
-  dateInput.addEventListener('change', () => {
-    renderTable();
-  });
-
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const entry = {
-      date: formData.get('date'),
-      time: formData.get('time'),
-      formula: Number(formData.get('formula') || 0),
-      breastmilk: Number(formData.get('breastmilk') || 0),
-      poo: formData.get('poo') ? 'Да' : 'Не',
-      pee: formData.get('pee') ? 'Да' : 'Не',
-      breastfeeding: formData.get('breastfeeding') ? 'Да' : 'Не',
-      breastfeedingTime: formData.get('breastfeedingTime') || '',
-      notes: formData.get('notes')
-    };
-    data.push(entry);
-    localStorage.setItem('babyData', JSON.stringify(data));
-    form.reset();
-    document.getElementById('breastfeedingTime').style.display = 'none';
-    setTodayDate();  // За да върне датата на днес след reset
-    renderTable();
-  });
-
-  function renderTable() {
-    tableBody.innerHTML = '';
-
-    const currentDate = dateInput.value;
-
-    // Филтрираме данните само за избраната дата
-    const filteredData = data.filter(entry => entry.date === currentDate);
-
-    let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
-
-    filteredData.forEach((entry, index) => {
-      totalFormula += Number(entry.formula) || 0;
-      totalBreastmilk += Number(entry.breastmilk) || 0;
-      if (entry.poo === 'Да') countPoo++;
-      if (entry.pee === 'Да') countPee++;
-      if (entry.breastfeeding === 'Да') countBreastfeeding++;
-
-      const row = document.createElement('tr');
-      // Внимание: Изтриване по оригинален index, за да изтрие правилния запис от общия масив
-      const originalIndex = data.indexOf(entry);
-      row.innerHTML = `
-        <td>${entry.date}</td><td>${entry.time}</td><td>${entry.formula}</td><td>${entry.breastmilk}</td>
-        <td>${entry.poo}</td><td>${entry.pee}</td><td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
-        <td><button onclick="deleteEntry(${originalIndex})">Изтрий</button></td>
-      `;
-      tableBody.appendChild(row);
-    });
-
-    summary.innerHTML = `
-      Общо адаптирано мляко: ${totalFormula} мл | 
-      Общо кърма: ${totalBreastmilk} мл | 
-      Брой акания: ${countPoo} | 
-      Брой пишания: ${countPee} | 
-      Брой кърмения: ${countBreastfeeding}
-    `;
-  }
-
-  function deleteEntry(index) {
-    data.splice(index, 1);
-    localStorage.setItem('babyData', JSON.stringify(data));
-    renderTable();
-  }
-
-  function setFormula(amount) {
-    document.getElementById('formulaInput').value = amount;
-  }
-
-  function setBreastmilk(amount) {
-    document.getElementById('breastmilkInput').value = amount;
-  }
-
-  function toggleBreastfeeding() {
-    const checkBox = document.getElementById('breastfeeding');
-    document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
-  }
-
-  // Първоначално рендерираме таблицата за днешната дата
+window.addEventListener('load', () => {
+  setTodayDate();
   renderTable();
+});
+
+form.addEventListener('reset', () => {
+  setTodayDate();
+});
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  const entry = {
+    date: formData.get('date'),
+    time: formData.get('time'),
+    formula: Number(formData.get('formula') || 0),
+    breastmilk: Number(formData.get('breastmilk') || 0),
+    poo: formData.get('poo') ? 'Да' : 'Не',
+    pee: formData.get('pee') ? 'Да' : 'Не',
+    breastfeeding: formData.get('breastfeeding') ? 'Да' : 'Не',
+    breastfeedingTime: formData.get('breastfeedingTime') || '',
+    notes: formData.get('notes'),
+    timestamp: serverTimestamp()
+  };
+  await addDoc(collectionRef, entry);
+  form.reset();
+  document.getElementById('breastfeedingTime').style.display = 'none';
+  setTodayDate();
+  renderTable();
+});
+
+async function renderTable() {
+  tableBody.innerHTML = '';
+  const currentDate = dateInput.value;
+  const q = query(collectionRef, where('date', '==', currentDate), orderBy('timestamp'));
+  const querySnapshot = await getDocs(q);
+
+  let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
+
+  querySnapshot.forEach(docSnap => {
+    const entry = docSnap.data();
+    totalFormula += Number(entry.formula) || 0;
+    totalBreastmilk += Number(entry.breastmilk) || 0;
+    if (entry.poo === 'Да') countPoo++;
+    if (entry.pee === 'Да') countPee++;
+    if (entry.breastfeeding === 'Да') countBreastfeeding++;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${entry.date}</td><td>${entry.time}</td><td>${entry.formula}</td><td>${entry.breastmilk}</td>
+      <td>${entry.poo}</td><td>${entry.pee}</td><td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
+      <td><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  summary.innerHTML = `
+    Общо адаптирано мляко: ${totalFormula} мл | 
+    Общо кърма: ${totalBreastmilk} мл | 
+    Брой акания: ${countPoo} | 
+    Брой пишания: ${countPee} | 
+    Брой кърмения: ${countBreastfeeding}
+  `;
+}
+
+async function deleteEntry(id) {
+  await deleteDoc(doc(db, "babyData", id));
+  renderTable();
+}
+
+dateInput.addEventListener('change', () => {
+  renderTable();
+});
+
+window.setFormula = amount => document.getElementById('formulaInput').value = amount;
+window.setBreastmilk = amount => document.getElementById('breastmilkInput').value = amount;
+window.toggleBreastfeeding = () => {
+  const checkBox = document.getElementById('breastfeeding');
+  document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
+};
 </script>
 
 </body>
