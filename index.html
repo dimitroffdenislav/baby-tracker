@@ -478,13 +478,13 @@ async function renderTable() {
     tableBody.appendChild(row);
   });
 
-  summary.innerHTML = `
-    Общо адаптирано мляко: ${totalFormula} мл | 
-    Общо кърма: ${totalBreastmilk} мл | 
-    Брой акания: ${countPoo} | 
-    Брой пишания: ${countPee} | 
-    Брой кърмения: ${countBreastfeeding}
-  `;
+ summary.innerHTML = `
+  Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
+  Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
+  Брой акания: <strong>${countPoo}</strong><br>
+  Брой пишания: <strong>${countPee}</strong><br>
+  Брой кърмения: <strong>${countBreastfeeding}</strong>
+`;
 }
 
 async function deleteEntry(id) {
