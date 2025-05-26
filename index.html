@@ -440,6 +440,9 @@ async function deleteEntry(id) {
   renderTable();
 }
 
+window.deleteEntry = deleteEntry;
+
+
 dateInput.addEventListener('change', () => {
   renderTable();
 });
