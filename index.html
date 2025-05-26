@@ -240,6 +240,50 @@
                 width: 100%;
                 padding: 10px;
             }
+
+          #dataTable, #dataTable thead, #dataTable tbody, #dataTable th, #dataTable td, #dataTable tr {
+    display: block;
+  }
+
+  #dataTable thead tr {
+    display: none; /* Скриваме хедъра */
+  }
+
+  #dataTable tbody tr {
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  }
+
+  #dataTable tbody tr:hover {
+    transform: none; /* премахваме мащабирането при hover за мобилни */
+    background: rgba(9, 132, 227, 0.1);
+  }
+
+  #dataTable td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  #dataTable td:last-child {
+    border-bottom: none;
+  }
+
+  #dataTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #0984e3;
+    flex-basis: 45%;
+    text-transform: uppercase;
+  }
+
         }
 
         /* Анимации */
@@ -421,10 +465,16 @@ async function renderTable() {
 
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${entry.date}</td><td>${entry.time}</td><td>${entry.formula}</td><td>${entry.breastmilk}</td>
-      <td>${entry.poo}</td><td>${entry.pee}</td><td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
-      <td><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
-    `;
+  <td data-label="Дата">${entry.date}</td>
+  <td data-label="Час">${entry.time}</td>
+  <td data-label="Адаптирано мляко (мл)">${entry.formula}</td>
+  <td data-label="Кърма (мл)">${entry.breastmilk}</td>
+  <td data-label="Акал">${entry.poo}</td>
+  <td data-label="Пишал">${entry.pee}</td>
+  <td data-label="Кърмене (мин)">${entry.breastfeedingTime}</td>
+  <td data-label="Забележки">${entry.notes}</td>
+  <td data-label="Действия"><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
+`;
     tableBody.appendChild(row);
   });
 
