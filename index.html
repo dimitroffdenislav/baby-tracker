@@ -1,382 +1,43 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Дневен режим на бебето</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-   <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #00b894 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #2d3436;
-        }
-
-        h1 {
-            text-align: center;
-            color: #2d3436;
-            margin-bottom: 20px;
-            font-size: 2.2rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            padding: 15px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        #entryForm {
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-row.full-width {
-            grid-template-columns: 1fr;
-        }
-
-        .checkbox-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .checkbox-row label {
-          display: flex;
-          align-items: center;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: #2d3436;
-            font-size: 1rem;
-        }
-
-        input[type="date"],
-        input[type="time"],
-        input[type="number"],
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            margin-top: 3px;
-            transition: all 0.3s ease;
-            background: rgba(255,255,255,0.9);
-        }
-
-        input[type="date"]:focus,
-        input[type="time"]:focus,
-        input[type="number"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #0984e3;
-            box-shadow: 0 0 15px rgba(9, 132, 227, 0.3);
-            transform: translateY(-2px);
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-left: 10px;
-            accent-color: #0984e3;
-            cursor: pointer;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #0984e3, #74b9ff);
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(9, 132, 227, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(9, 132, 227, 0.6);
-            background: linear-gradient(135deg, #74b9ff, #00b894);
-        }
-
-        .btn:active {
-            transform: translateY(-1px);
-        }
-
-        #dataTable {
-            width: 100%;
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            border-collapse: collapse;
-        }
-
-        #dataTable th {
-            background: linear-gradient(135deg, #0984e3, #74b9ff);
-            color: white;
-            padding: 15px 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        #dataTable td {
-            padding: 12px 10px;
-            text-align: center;
-            border-bottom: 1px solid rgba(9, 132, 227, 0.1);
-            font-size: 0.9rem;
-        }
-
-        #dataTable tbody tr:hover {
-            background: rgba(9, 132, 227, 0.1);
-            transform: scale(1.01);
-            transition: all 0.3s ease;
-        }
-
-        #dataTable tbody tr:nth-child(even) {
-            background: rgba(9, 132, 227, 0.05);
-        }
-
-        .summary {
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .summary h3 {
-            color: #2d3436;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        #breastfeedingTime {
-            margin-block: 12px;
-            padding: 12px;
-            background: rgba(9, 132, 227, 0.1);
-            border-radius: 8px;
-            border: 2px dashed #0984e3;
-        }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-                padding: 12px;
-            }
-
-            #entryForm {
-                padding: 15px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .checkbox-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            #dataTable {
-                font-size: 0.8rem;
-            }
-
-            #dataTable th,
-            #dataTable td {
-                padding: 6px 4px;
-            }
-
-            .btn {
-                width: 100%;
-                padding: 10px;
-            }
-
-          #dataTable, #dataTable thead, #dataTable tbody, #dataTable th, #dataTable td, #dataTable tr {
-    display: block;
-  }
-
-  #dataTable thead tr {
-    display: none; /* Скриваме хедъра */
-  }
-
-  #dataTable tbody tr {
-    margin-bottom: 1rem;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
-  }
-
-  #dataTable tbody tr:hover {
-    transform: none; /* премахваме мащабирането при hover за мобилни */
-    background: rgba(9, 132, 227, 0.1);
-  }
-
-  #dataTable td {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 10px;
-    border: none;
-    border-bottom: 1px solid #ccc;
-    font-size: 0.9rem;
-    text-align: left;
-  }
-
-  #dataTable td:last-child {
-    border-bottom: none;
-  }
-
-  #dataTable td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #0984e3;
-    flex-basis: 45%;
-    text-transform: uppercase;
-  }
-
-        }
-
-        /* Анимации */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        #entryForm,
-        #dataTable,
-        .summary {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Специални стилове за checkbox-ите */
-        input[type="checkbox"] {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #0984e3;
-            border-radius: 5px;
-            background: white;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s ease;
-            margin-left: 8px;
-        }
-
-        input[type="checkbox"]:checked {
-            background: #0984e3;
-            border-color: #74b9ff;
-        }
-
-        input[type="checkbox"]:checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        /* Hover ефекти */
-        input[type="checkbox"]:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(9, 132, 227, 0.5);
-        }
-    </style>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f1f2f6; }
+    h1 { text-align: center; }
+    form, table, .summary { background: white; padding: 1rem; border-radius: 10px; margin-bottom: 2rem; }
+    input, textarea { width: 100%; margin-top: 0.5rem; padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; }
+    label { display: block; margin-top: 1rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; background: #0984e3; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: center; }
+    .summary { font-weight: bold; }
+  </style>
 </head>
 <body>
   <h1>Дневен режим на бебето</h1>
-  
+
   <form id="entryForm">
-    <div class="form-row">
-        <label>Дата: <input type="date" name="date" required></label>
-
-        <label>Час: <input type="time" name="time" required></label>
-    </div>
-
-    <div class="form-row">
-        <label>Адаптирано мляко (мл): <input type="number" name="formula" id="formulaInput"></label>
-          
-        <label>Кърма (мл): <input type="number" name="breastmilk" id="breastmilkInput"></label>
-    </div>
-
-    <div class="checkbox-row">
-      <label>Акал: <input type="checkbox" name="poo"></label>
-
-      <label>Пишал: <input type="checkbox" name="pee"></label>
-
-      <label>Кърмене: <input type="checkbox" id="breastfeeding" name="breastfeeding" onchange="toggleBreastfeeding()"></label>
-    </div>
-
-    <div id="breastfeedingTime" style="display:none;">
+    <label>Дата: <input type="date" name="date" required></label>
+    <label>Час: <input type="time" name="time" required></label>
+    <label>Адаптирано мляко (мл): <input type="number" name="formula" id="formulaInput"></label>
+    <label>Кърма (мл): <input type="number" name="breastmilk" id="breastmilkInput"></label>
+    <label><input type="checkbox" name="poo"> Акал</label>
+    <label><input type="checkbox" name="pee"> Пишал</label>
+    <label><input type="checkbox" id="breastfeeding" name="breastfeeding" onchange="toggleBreastfeeding()"> Кърмене</label>
+    <div id="breastfeedingTime" style="display: none;">
       <label>Време на кърмене (мин): <input type="number" name="breastfeedingTime"></label>
     </div>
-
-    <label>Забележки: <textarea name="notes"></textarea></label><br>
-    <button type="submit" class="btn">Добави запис</button>
+    <label>Забележки: <textarea name="notes"></textarea></label>
+    <button type="submit">Добави запис</button>
   </form>
 
   <table id="dataTable">
     <thead>
       <tr>
-        <th>Дата</th><th>Час</th><th>Адаптирано мляко (мл)</th><th>Кърма (мл)</th>
+        <th>Дата</th><th>Час</th><th>Адаптирано мляко</th><th>Кърма</th>
         <th>Акал</th><th>Пишал</th><th>Кърмене (мин)</th><th>Забележки</th><th>Действия</th>
       </tr>
     </thead>
@@ -385,127 +46,147 @@
 
   <div class="summary" id="summary"></div>
 
-    <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-// Ако искаш и analytics, добави:
- import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
-  authDomain: "baby-tracker-fab40.firebaseapp.com",
-  projectId: "baby-tracker-fab40",
-  storageBucket: "baby-tracker-fab40.appspot.com",
-  messagingSenderId: "60430088674",
-  appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
-  measurementId: "G-3EESV4H39C"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
+      authDomain: "baby-tracker-fab40.firebaseapp.com",
+      projectId: "baby-tracker-fab40",
+      storageBucket: "baby-tracker-fab40.appspot.com",
+      messagingSenderId: "60430088674",
+      appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
+      measurementId: "G-3EESV4H39C"
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const collectionRef = collection(db, "babyData");
-// const analytics = getAnalytics(app);  // ако искаш analytics
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-const form = document.getElementById('entryForm');
-const tableBody = document.getElementById('dataTable').querySelector('tbody');
-const summary = document.getElementById('summary');
-const dateInput = document.querySelector('input[name="date"]');
+    let userId = null;
+    const form = document.getElementById('entryForm');
+    const tableBody = document.getElementById('dataTable').querySelector('tbody');
+    const summary = document.getElementById('summary');
+    const dateInput = document.querySelector('input[name="date"]');
 
-function setTodayDate() {
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.value = today;
-}
+    function setTodayDate() {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+    }
 
-window.addEventListener('load', () => {
-  setTodayDate();
-  renderTable();
-});
+    window.setFormula = amount => document.getElementById('formulaInput').value = amount;
+    window.setBreastmilk = amount => document.getElementById('breastmilkInput').value = amount;
+    window.toggleBreastfeeding = () => {
+      const checkBox = document.getElementById('breastfeeding');
+      document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
+    };
 
-form.addEventListener('reset', () => {
-  setTodayDate();
-});
+    // 🔁 Миграция на стари записи
+    async function migrateOldDataToUserFolder() {
+      const rootCollection = collection(db, "babyData");
+      const snapshot = await getDocs(rootCollection);
 
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  const formData = new FormData(form);
-  const entry = {
-    date: formData.get('date'),
-    time: formData.get('time'),
-    formula: Number(formData.get('formula') || 0),
-    breastmilk: Number(formData.get('breastmilk') || 0),
-    poo: formData.get('poo') ? 'Да' : 'Не',
-    pee: formData.get('pee') ? 'Да' : 'Не',
-    breastfeeding: formData.get('breastfeeding') ? 'Да' : 'Не',
-    breastfeedingTime: formData.get('breastfeedingTime') || '',
-    notes: formData.get('notes'),
-    timestamp: serverTimestamp()
-  };
-  await addDoc(collectionRef, entry);
-  form.reset();
-  document.getElementById('breastfeedingTime').style.display = 'none';
-  setTodayDate();
-  renderTable();
-});
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (docSnap.ref.parent.parent) continue; // пропусни вече вложени
+        try {
+          const newRef = doc(db, "babyData", userId, "entries", docSnap.id);
+          await setDoc(newRef, data);
+          await deleteDoc(docSnap.ref);
+          console.log(`Мигриран: ${docSnap.id}`);
+        } catch (err) {
+          console.error(`Грешка при миграция на ${docSnap.id}:`, err);
+        }
+      }
+    }
 
-async function renderTable() {
-  tableBody.innerHTML = '';
-  const currentDate = dateInput.value;
-  const q = query(collectionRef, where('date', '==', currentDate), orderBy('timestamp'));
-  const querySnapshot = await getDocs(q);
+    // 🔐 Анонимен вход и стартиране
+    signInAnonymously(auth)
+      .then(() => console.log("Анонимен вход успешен"))
+      .catch((error) => console.error("Грешка при вход:", error));
 
-  let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userId = user.uid;
+        console.log("User ID:", userId);
+        setTodayDate();
+        renderTable();
+        migrateOldDataToUserFolder();
+      }
+    });
 
-  querySnapshot.forEach(docSnap => {
-    const entry = docSnap.data();
-    totalFormula += Number(entry.formula) || 0;
-    totalBreastmilk += Number(entry.breastmilk) || 0;
-    if (entry.poo === 'Да') countPoo++;
-    if (entry.pee === 'Да') countPee++;
-    if (entry.breastfeeding === 'Да') countBreastfeeding++;
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!userId) return alert("Няма потребител.");
+      const formData = new FormData(form);
+      const entry = {
+        date: formData.get('date'),
+        time: formData.get('time'),
+        formula: Number(formData.get('formula') || 0),
+        breastmilk: Number(formData.get('breastmilk') || 0),
+        poo: formData.get('poo') ? 'Да' : 'Не',
+        pee: formData.get('pee') ? 'Да' : 'Не',
+        breastfeeding: formData.get('breastfeeding') ? 'Да' : 'Не',
+        breastfeedingTime: formData.get('breastfeedingTime') || '',
+        notes: formData.get('notes'),
+        timestamp: serverTimestamp()
+      };
 
-    const row = document.createElement('tr');
-    row.innerHTML = `
-  <td data-label="Дата">${entry.date}</td>
-  <td data-label="Час">${entry.time}</td>
-  <td data-label="Адаптирано мляко (мл)">${entry.formula}</td>
-  <td data-label="Кърма (мл)">${entry.breastmilk}</td>
-  <td data-label="Акал">${entry.poo}</td>
-  <td data-label="Пишал">${entry.pee}</td>
-  <td data-label="Кърмене (мин)">${entry.breastfeedingTime}</td>
-  <td data-label="Забележки">${entry.notes}</td>
-  <td data-label="Действия"><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
-`;
-    tableBody.appendChild(row);
-  });
+      const ref = collection(db, "babyData", userId, "entries");
+      await addDoc(ref, entry);
+      form.reset();
+      document.getElementById('breastfeedingTime').style.display = 'none';
+      setTodayDate();
+      renderTable();
+    });
 
- summary.innerHTML = `
-  Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
-  Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
-  Брой акания: <strong>${countPoo}</strong><br>
-  Брой пишания: <strong>${countPee}</strong><br>
-  Брой кърмения: <strong>${countBreastfeeding}</strong>
-`;
-}
+    async function renderTable() {
+      if (!userId) return;
+      tableBody.innerHTML = '';
+      const currentDate = dateInput.value;
+      const ref = collection(db, "babyData", userId, "entries");
+      const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
+      const snapshot = await getDocs(q);
 
-async function deleteEntry(id) {
-  await deleteDoc(doc(db, "babyData", id));
-  renderTable();
-}
+      let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
 
-window.deleteEntry = deleteEntry;
+      snapshot.forEach(docSnap => {
+        const entry = docSnap.data();
+        totalFormula += entry.formula || 0;
+        totalBreastmilk += entry.breastmilk || 0;
+        if (entry.poo === 'Да') countPoo++;
+        if (entry.pee === 'Да') countPee++;
+        if (entry.breastfeeding === 'Да') countBreastfeeding++;
 
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.date}</td><td>${entry.time}</td>
+          <td>${entry.formula}</td><td>${entry.breastmilk}</td>
+          <td>${entry.poo}</td><td>${entry.pee}</td>
+          <td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
+          <td><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
 
-dateInput.addEventListener('change', () => {
-  renderTable();
-});
+      summary.innerHTML = `
+        Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
+        Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
+        Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong><br>
+        Кърмения: <strong>${countBreastfeeding}</strong>
+      `;
+    }
 
-window.setFormula = amount => document.getElementById('formulaInput').value = amount;
-window.setBreastmilk = amount => document.getElementById('breastmilkInput').value = amount;
-window.toggleBreastfeeding = () => {
-  const checkBox = document.getElementById('breastfeeding');
-  document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
-};
-</script>
+    window.deleteEntry = async function(id) {
+      if (!userId) return;
+      const ref = doc(db, "babyData", userId, "entries", id);
+      await deleteDoc(ref);
+      renderTable();
+    };
 
+    dateInput.addEventListener("change", renderTable);
+  </script>
 </body>
 </html>
