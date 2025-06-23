@@ -22,8 +22,8 @@
 
   <div id="loginSection">
     <h2>Вход</h2>
-    <input type="email" id="email" placeholder="Имейл" value="dd.shopingonline@gmail.com" required />
-    <input type="password" id="password" placeholder="Парола" value="n0passwd" required />
+    <input type="email" id="email" placeholder="Имейл" value="" required />
+    <input type="password" id="password" placeholder="Парола" value="" required />
     <button id="loginBtn">Вход</button>
   </div>
 
@@ -57,143 +57,183 @@
     <button onclick="logout()">Изход</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<script type="module">
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
-      authDomain: "baby-tracker-fab40.firebaseapp.com",
-      projectId: "baby-tracker-fab40",
-      storageBucket: "baby-tracker-fab40.appspot.com",
-      messagingSenderId: "60430088674",
-      appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
-      measurementId: "G-3EESV4H39C"
-    };
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    orderBy,
+    deleteDoc,
+    doc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    let userId = null;
-    const loginSection = document.getElementById("loginSection");
-    const appSection = document.getElementById("appSection");
-    const form = document.getElementById('entryForm');
-    const tableBody = document.getElementById('dataTable').querySelector('tbody');
-    const summary = document.getElementById('summary');
-    const dateInput = document.querySelector('input[name="date"]');
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
+    authDomain: "baby-tracker-fab40.firebaseapp.com",
+    projectId: "baby-tracker-fab40",
+    storageBucket: "baby-tracker-fab40.appspot.com",
+    messagingSenderId: "60430088674",
+    appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
+    measurementId: "G-3EESV4H39C"
+  };
 
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth();
 
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        if (error.code === "auth/user-not-found") {
+  let userId = null;
+
+  const form = document.getElementById("entryForm");
+  const tableBody = document.querySelector("#dataTable tbody");
+  const summary = document.getElementById("summary");
+  const dateInput = document.querySelector('input[name="date"]');
+  const loginSection = document.getElementById("loginSection");
+  const appSection = document.getElementById("appSection");
+
+  function setTodayDate() {
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;
+  }
+
+  // 🔐 Login
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const rememberMe = document.getElementById("rememberMe").checked;
+
+    const persistence = rememberMe
+      ? browserLocalPersistence
+      : browserSessionPersistence;
+
+    try {
+      await setPersistence(auth, persistence);
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        try {
           await createUserWithEmailAndPassword(auth, email, password);
-        } else {
-          alert("Грешка при вход: " + error.message);
+        } catch (signupErr) {
+          alert("Грешка при регистрация: " + signupErr.message);
         }
+      } else {
+        alert("Грешка при вход: " + error.message);
       }
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userId = user.uid;
-        loginSection.style.display = "none";
-        appSection.style.display = "block";
-        setTodayDate();
-        renderTable();
-      }
-    });
-
-    function setTodayDate() {
-      const today = new Date().toISOString().split('T')[0];
-      dateInput.value = today;
     }
+  });
 
-    window.toggleBreastfeeding = () => {
-      const checkBox = document.getElementById('breastfeeding');
-      document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
-    };
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      if (!userId) return alert("Няма потребител.");
-      const formData = new FormData(form);
-      const entry = {
-        date: formData.get('date'),
-        time: formData.get('time'),
-        formula: Number(formData.get('formula') || 0),
-        breastmilk: Number(formData.get('breastmilk') || 0),
-        poo: formData.get('poo') ? 'Да' : 'Не',
-        pee: formData.get('pee') ? 'Да' : 'Не',
-        breastfeeding: formData.get('breastfeeding') ? 'Да' : 'Не',
-        breastfeedingTime: formData.get('breastfeedingTime') || '',
-        notes: formData.get('notes'),
-        timestamp: serverTimestamp()
-      };
-
-      const ref = collection(db, "babyData", userId, "entries");
-      await addDoc(ref, entry);
-      form.reset();
-      document.getElementById('breastfeedingTime').style.display = 'none';
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userId = user.uid;
+      loginSection.style.display = "none";
+      appSection.style.display = "block";
       setTodayDate();
       renderTable();
+    } else {
+      loginSection.style.display = "block";
+      appSection.style.display = "none";
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!userId) return alert("Няма потребител.");
+    const formData = new FormData(form);
+    const entry = {
+      date: formData.get("date"),
+      time: formData.get("time"),
+      formula: Number(formData.get("formula") || 0),
+      breastmilk: Number(formData.get("breastmilk") || 0),
+      poo: formData.get("poo") ? "Да" : "Не",
+      pee: formData.get("pee") ? "Да" : "Не",
+      breastfeeding: formData.get("breastfeeding") ? "Да" : "Не",
+      breastfeedingTime: formData.get("breastfeedingTime") || "",
+      notes: formData.get("notes"),
+      timestamp: serverTimestamp(),
+    };
+
+    const ref = collection(db, "babyData", userId, "entries");
+    await addDoc(ref, entry);
+    form.reset();
+    document.getElementById("breastfeedingTime").style.display = "none";
+    setTodayDate();
+    renderTable();
+  });
+
+  async function renderTable() {
+    if (!userId) return;
+    tableBody.innerHTML = "";
+    const currentDate = dateInput.value;
+    const ref = collection(db, "babyData", userId, "entries");
+    const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
+    const snapshot = await getDocs(q);
+
+    let totalFormula = 0,
+      totalBreastmilk = 0,
+      countPoo = 0,
+      countPee = 0,
+      countBreastfeeding = 0;
+
+    snapshot.forEach((docSnap) => {
+      const entry = docSnap.data();
+      totalFormula += entry.formula || 0;
+      totalBreastmilk += entry.breastmilk || 0;
+      if (entry.poo === "Да") countPoo++;
+      if (entry.pee === "Да") countPee++;
+      if (entry.breastfeeding === "Да") countBreastfeeding++;
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.date}</td><td>${entry.time}</td>
+        <td>${entry.formula}</td><td>${entry.breastmilk}</td>
+        <td>${entry.poo}</td><td>${entry.pee}</td>
+        <td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
+        <td><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
+      `;
+      tableBody.appendChild(row);
     });
 
-    async function renderTable() {
-      if (!userId) return;
-      tableBody.innerHTML = '';
-      const currentDate = dateInput.value;
-      const ref = collection(db, "babyData", userId, "entries");
-      const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
-      const snapshot = await getDocs(q);
+    summary.innerHTML = `
+      Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
+      Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
+      Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong><br>
+      Кърмения: <strong>${countBreastfeeding}</strong>
+    `;
+  }
 
-      let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
+  window.deleteEntry = async function (id) {
+    if (!userId) return;
+    const ref = doc(db, "babyData", userId, "entries", id);
+    await deleteDoc(ref);
+    renderTable();
+  };
 
-      snapshot.forEach(docSnap => {
-        const entry = docSnap.data();
-        totalFormula += entry.formula || 0;
-        totalBreastmilk += entry.breastmilk || 0;
-        if (entry.poo === 'Да') countPoo++;
-        if (entry.pee === 'Да') countPee++;
-        if (entry.breastfeeding === 'Да') countBreastfeeding++;
+  dateInput.addEventListener("change", renderTable);
+  window.toggleBreastfeeding = () => {
+    const checkBox = document.getElementById("breastfeeding");
+    document.getElementById("breastfeedingTime").style.display = checkBox.checked
+      ? "block"
+      : "none";
+  };
+</script>
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${entry.date}</td><td>${entry.time}</td>
-          <td>${entry.formula}</td><td>${entry.breastmilk}</td>
-          <td>${entry.poo}</td><td>${entry.pee}</td>
-          <td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
-          <td><button onclick="deleteEntry('${docSnap.id}')">Изтрий</button></td>
-        `;
-        tableBody.appendChild(row);
-      });
-
-      summary.innerHTML = `
-        Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
-        Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
-        Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong><br>
-        Кърмения: <strong>${countBreastfeeding}</strong>
-      `;
-    }
-
-    window.deleteEntry = async function(id) {
-      if (!userId) return;
-      const ref = doc(db, "babyData", userId, "entries", id);
-      await deleteDoc(ref);
-      renderTable();
-    };
-
-    window.logout = async () => {
-      await signOut(auth);
-      window.location.reload();
-    };
-
-    dateInput.addEventListener("change", renderTable);
-  </script>
 </body>
 </html>
