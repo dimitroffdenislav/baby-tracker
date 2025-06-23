@@ -83,25 +83,6 @@
       document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
     };
 
-    // 🔁 Миграция на стари записи
-    async function migrateOldDataToUserFolder() {
-      const rootCollection = collection(db, "babyData");
-      const snapshot = await getDocs(rootCollection);
-
-      for (const docSnap of snapshot.docs) {
-        const data = docSnap.data();
-        if (docSnap.ref.parent.parent) continue; // пропусни вече вложени
-        try {
-          const newRef = doc(db, "babyData", userId, "entries", docSnap.id);
-          await setDoc(newRef, data);
-          await deleteDoc(docSnap.ref);
-          console.log(`Мигриран: ${docSnap.id}`);
-        } catch (err) {
-          console.error(`Грешка при миграция на ${docSnap.id}:`, err);
-        }
-      }
-    }
-
     // 🔐 Анонимен вход и стартиране
     signInAnonymously(auth)
       .then(() => console.log("Анонимен вход успешен"))
