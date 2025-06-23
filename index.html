@@ -14,42 +14,53 @@
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: center; }
     .summary { font-weight: bold; }
+    #loginSection { background: white; padding: 2rem; border-radius: 10px; max-width: 400px; margin: auto; margin-top: 4rem; }
   </style>
 </head>
 <body>
   <h1>Дневен режим на бебето</h1>
 
-  <form id="entryForm">
-    <label>Дата: <input type="date" name="date" required></label>
-    <label>Час: <input type="time" name="time" required></label>
-    <label>Адаптирано мляко (мл): <input type="number" name="formula" id="formulaInput"></label>
-    <label>Кърма (мл): <input type="number" name="breastmilk" id="breastmilkInput"></label>
-    <label><input type="checkbox" name="poo"> Акал</label>
-    <label><input type="checkbox" name="pee"> Пишал</label>
-    <label><input type="checkbox" id="breastfeeding" name="breastfeeding" onchange="toggleBreastfeeding()"> Кърмене</label>
-    <div id="breastfeedingTime" style="display: none;">
-      <label>Време на кърмене (мин): <input type="number" name="breastfeedingTime"></label>
-    </div>
-    <label>Забележки: <textarea name="notes"></textarea></label>
-    <button type="submit">Добави запис</button>
-  </form>
+  <div id="loginSection">
+    <h2>Вход</h2>
+    <input type="email" id="email" placeholder="Имейл" value="dd.shopingonline@gmail.com" required />
+    <input type="password" id="password" placeholder="Парола" value="n0passwd" required />
+    <button id="loginBtn">Вход</button>
+  </div>
 
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>Дата</th><th>Час</th><th>Адаптирано мляко</th><th>Кърма</th>
-        <th>Акал</th><th>Пишал</th><th>Кърмене (мин)</th><th>Забележки</th><th>Действия</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="appSection" style="display: none;">
+    <form id="entryForm">
+      <label>Дата: <input type="date" name="date" required></label>
+      <label>Час: <input type="time" name="time" required></label>
+      <label>Адаптирано мляко (мл): <input type="number" name="formula" id="formulaInput"></label>
+      <label>Кърма (мл): <input type="number" name="breastmilk" id="breastmilkInput"></label>
+      <label><input type="checkbox" name="poo"> Акал</label>
+      <label><input type="checkbox" name="pee"> Пишал</label>
+      <label><input type="checkbox" id="breastfeeding" name="breastfeeding" onchange="toggleBreastfeeding()"> Кърмене</label>
+      <div id="breastfeedingTime" style="display: none;">
+        <label>Време на кърмене (мин): <input type="number" name="breastfeedingTime"></label>
+      </div>
+      <label>Забележки: <textarea name="notes"></textarea></label>
+      <button type="submit">Добави запис</button>
+    </form>
 
-  <div class="summary" id="summary"></div>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Дата</th><th>Час</th><th>Адаптирано мляко</th><th>Кърма</th>
+          <th>Акал</th><th>Пишал</th><th>Кърмене (мин)</th><th>Забележки</th><th>Действия</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="summary" id="summary"></div>
+    <button onclick="logout()">Изход</button>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
@@ -66,37 +77,47 @@
     const auth = getAuth(app);
 
     let userId = null;
+    const loginSection = document.getElementById("loginSection");
+    const appSection = document.getElementById("appSection");
     const form = document.getElementById('entryForm');
     const tableBody = document.getElementById('dataTable').querySelector('tbody');
     const summary = document.getElementById('summary');
     const dateInput = document.querySelector('input[name="date"]');
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        if (error.code === "auth/user-not-found") {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          alert("Грешка при вход: " + error.message);
+        }
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userId = user.uid;
+        loginSection.style.display = "none";
+        appSection.style.display = "block";
+        setTodayDate();
+        renderTable();
+      }
+    });
 
     function setTodayDate() {
       const today = new Date().toISOString().split('T')[0];
       dateInput.value = today;
     }
 
-    window.setFormula = amount => document.getElementById('formulaInput').value = amount;
-    window.setBreastmilk = amount => document.getElementById('breastmilkInput').value = amount;
     window.toggleBreastfeeding = () => {
       const checkBox = document.getElementById('breastfeeding');
       document.getElementById('breastfeedingTime').style.display = checkBox.checked ? 'block' : 'none';
     };
-
-    // 🔐 Анонимен вход и стартиране
-    signInAnonymously(auth)
-      .then(() => console.log("Анонимен вход успешен"))
-      .catch((error) => console.error("Грешка при вход:", error));
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userId = user.uid;
-        console.log("User ID:", userId);
-        setTodayDate();
-        renderTable();
-        migrateOldDataToUserFolder();
-      }
-    });
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -165,6 +186,11 @@
       const ref = doc(db, "babyData", userId, "entries", id);
       await deleteDoc(ref);
       renderTable();
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.reload();
     };
 
     dateInput.addEventListener("change", renderTable);
