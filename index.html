@@ -1,279 +1,325 @@
 <!DOCTYPE html>
 <html lang="bg">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Дневен режим на бебето</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-     <style>
-      @media (max-width: 768px) {
-        table thead {
-          display: none;
-        }
-        table tbody tr {
-          display: block;
-          margin-bottom: 1rem;
-          background-color: #fff;
-          padding: 1rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.05);
-        }
-        table td {
-          display: flex;
-          justify-content: space-between;
-          padding: 0.5rem 0;
-          border: none;
-        }
-        table td::before {
-          content: attr(data-label);
-          font-weight: bold;
-        }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Дневен режим на бебето</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f1f2f6;
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .auth {
+      max-width: 400px;
+      margin: 0 auto 2rem;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .auth__title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .auth__field {
+      margin-bottom: 1rem;
+    }
+    .auth__input {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .auth__checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .auth__checkbox input {
+      margin-right: 0.5rem;
+    }
+    .auth__button {
+      width: 100%;
+      background: #0984e3;
+      color: white;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .form {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 10px;
+    }
+    .form__group {
+      margin-bottom: 1rem;
+    }
+    .form__input, .form__textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table__header,
+    .table__cell {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    .table__header {
+      background: #f1f2f6;
+      font-weight: bold;
+    }
+    @media (max-width: 768px) {
+      .table__cell[data-label]:before {
+        content: attr(data-label) ": ";
+        font-weight: bold;
+        display: block;
       }
-    </style>
-  </head>
-  <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
-    <div id="authSection" class="w-full max-w-md bg-white p-6 rounded shadow-md">
-      <h1 class="text-2xl font-bold mb-4 text-center">Вход</h1>
-      <input type="email" id="email" placeholder="Имейл" class="w-full p-2 border rounded mb-2" />
-      <input type="password" id="password" placeholder="Парола" class="w-full p-2 border rounded mb-2" />
-      <label class="inline-flex items-center mb-4">
-        <input type="checkbox" id="rememberMe" class="mr-2" /> Запомни ме
-      </label>
-      <button id="loginBtn" class="w-full bg-blue-500 text-white p-2 rounded">Вход</button>
+      .table__header {
+        display: none;
+      }
+      .table__cell {
+        display: block;
+        text-align: left;
+        border: none;
+        border-bottom: 1px solid #ddd;
+      }
+      .table__row {
+        display: block;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth" id="authSection">
+      <h1 class="auth__title">Вход</h1>
+      <div class="auth__field">
+        <input type="email" id="email" placeholder="Имейл" class="auth__input" />
+      </div>
+      <div class="auth__field">
+        <input type="password" id="password" placeholder="Парола" class="auth__input" />
+      </div>
+      <div class="auth__checkbox">
+        <input type="checkbox" id="rememberMe" />
+        <label for="rememberMe">Запомни ме</label>
+      </div>
+      <button id="loginBtn" class="auth__button">Вход</button>
     </div>
 
-    <div id="appSection" class="hidden w-full max-w-4xl mx-auto">
-      <div class="flex justify-between items-center mt-6">
-        <h1 class="text-2xl font-bold mb-4">Дневен режим на бебето</h1>
-        <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded">Изход</button>
-      </div>
-
-      <form id="entryForm" class="bg-white p-4 rounded shadow mb-6">
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label>Дата:</label>
-            <input type="date" name="date" required class="w-full p-2 border rounded" />
-          </div>
-          <div>
-            <label>Час:</label>
-            <input type="time" name="time" required class="w-full p-2 border rounded" />
-          </div>
-          <div>
-            <label>Адаптирано мляко (мл):</label>
-            <input type="number" name="formula" id="formulaInput" class="w-full p-2 border rounded" />
-          </div>
-          <div>
-            <label>Кърма (мл):</label>
-            <input type="number" name="breastmilk" id="breastmilkInput" class="w-full p-2 border rounded" />
-          </div>
-          <div>
-            <label><input type="checkbox" name="poo" /> Акал</label>
-          </div>
-          <div>
-            <label><input type="checkbox" name="pee" /> Пишал</label>
-          </div>
-          <div>
-            <label><input type="checkbox" id="breastfeeding" name="breastfeeding" onchange="toggleBreastfeeding()" /> Кърмене</label>
-            <div id="breastfeedingTime" class="mt-2 hidden">
-              <label>Време на кърмене (мин):</label>
-              <input type="number" name="breastfeedingTime" class="w-full p-2 border rounded" />
-            </div>
-          </div>
-          <div class="md:col-span-2">
-            <label>Забележки:</label>
-            <textarea name="notes" class="w-full p-2 border rounded"></textarea>
+    <div id="appSection" style="display:none;">
+      <form id="entryForm" class="form">
+        <div class="form__group">
+          <label>Дата:<br><input type="date" name="date" required class="form__input" /></label>
+        </div>
+        <div class="form__group">
+          <label>Час:<br><input type="time" name="time" required class="form__input" /></label>
+        </div>
+        <div class="form__group">
+          <label>Адаптирано мляко (мл):<br><input type="number" name="formula" class="form__input" /></label>
+        </div>
+        <div class="form__group">
+          <label>Кърма (мл):<br><input type="number" name="breastmilk" class="form__input" /></label>
+        </div>
+        <div class="form__group">
+          <label><input type="checkbox" name="poo" /> Акал</label>
+          <label><input type="checkbox" name="pee" /> Пишал</label>
+          <label><input type="checkbox" id="breastfeeding" name="breastfeeding" /> Кърмене</label>
+          <div id="breastfeedingTimeContainer" style="display: none;">
+            <label>Време на кърмене (мин):<br><input type="number" name="breastfeedingTime" class="form__input" /></label>
           </div>
         </div>
-        <button type="submit" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Добави запис</button>
+        <div class="form__group">
+          <label>Забележки:<br><textarea name="notes" class="form__textarea"></textarea></label>
+        </div>
+        <button type="submit" class="auth__button">Добави</button>
+        <button id="logoutBtn" class="auth__button" style="background:#d63031; margin-top:1rem">Изход</button>
       </form>
 
-      <div class="bg-white p-4 rounded shadow mb-6 overflow-x-auto">
-        <table id="dataTable" class="w-full text-sm text-left">
-          <thead class="bg-gray-200">
-            <tr>
-              <th>Дата</th><th>Час</th><th>Адаптирано</th><th>Кърма</th>
-              <th>Акал</th><th>Пишал</th><th>Кърмене (мин)</th><th>Забележки</th><th>Действия</th>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr class="table__row">
+              <th class="table__header">Дата</th>
+              <th class="table__header">Час</th>
+              <th class="table__header">Адаптирано</th>
+              <th class="table__header">Кърма</th>
+              <th class="table__header">Акал</th>
+              <th class="table__header">Пишал</th>
+              <th class="table__header">Кърмене (мин)</th>
+              <th class="table__header">Забележки</th>
+              <th class="table__header">Действия</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody id="dataTable"></tbody>
         </table>
       </div>
-
-      <div id="summary" class="bg-white p-4 rounded shadow text-sm"></div>
     </div>
+  </div>
 
-    <script type="module">
-      // app.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, query,
+      where, orderBy, deleteDoc, doc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      onAuthStateChanged, setPersistence, browserLocalPersistence,
+      browserSessionPersistence, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
-  authDomain: "baby-tracker-fab40.firebaseapp.com",
-  projectId: "baby-tracker-fab40",
-  storageBucket: "baby-tracker-fab40.appspot.com",
-  messagingSenderId: "60430088674",
-  appId: "1:60430088674:web:4eaff3297a1411e70b21bb",
-  measurementId: "G-3EESV4H39C"
-};
+    const config = {
+      apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
+      authDomain: "baby-tracker-fab40.firebaseapp.com",
+      projectId: "baby-tracker-fab40",
+      storageBucket: "baby-tracker-fab40.appspot.com",
+      messagingSenderId: "60430088674",
+      appId: "1:60430088674:web:4eaff3297a1411e70b21bb"
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+    const app = initializeApp(config);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-const authSection = document.getElementById("authSection");
-const appSection = document.getElementById("appSection");
-const form = document.getElementById("entryForm");
-const tableBody = document.getElementById("dataTable").querySelector("tbody");
-const summary = document.getElementById("summary");
-const dateInput = document.querySelector('input[name="date"]');
+    const authSection = document.getElementById("authSection");
+    const appSection = document.getElementById("appSection");
+    const form = document.getElementById("entryForm");
+    const tableBody = document.getElementById("dataTable");
+    const dateInput = form.querySelector("input[name='date']");
 
-function setTodayDate() {
-  const today = new Date().toISOString().split("T")[0];
-  dateInput.value = today;
-}
-
-function toggleBreastfeeding() {
-  const checkBox = document.getElementById("breastfeeding");
-  document.getElementById("breastfeedingTime").classList.toggle("hidden", !checkBox.checked);
-}
-window.toggleBreastfeeding = toggleBreastfeeding;
-
-function renderUI(user) {
-  if (user) {
-    authSection.classList.add("hidden");
-    appSection.classList.remove("hidden");
-    setTodayDate();
-    renderTable(user.uid);
-  } else {
-    authSection.classList.remove("hidden");
-    appSection.classList.add("hidden");
-  }
-}
-
-async function renderTable(userId) {
-  tableBody.innerHTML = "";
-  const currentDate = dateInput.value;
-  const ref = collection(db, "babyData", userId, "entries");
-  const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
-  const snapshot = await getDocs(q);
-
-  let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
-
-  snapshot.forEach(docSnap => {
-    const entry = docSnap.data();
-    totalFormula += entry.formula || 0;
-    totalBreastmilk += entry.breastmilk || 0;
-    if (entry.poo === "Да") countPoo++;
-    if (entry.pee === "Да") countPee++;
-    if (entry.breastfeeding === "Да") countBreastfeeding++;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${entry.date}</td><td>${entry.time}</td>
-      <td>${entry.formula}</td><td>${entry.breastmilk}</td>
-      <td>${entry.poo}</td><td>${entry.pee}</td>
-      <td>${entry.breastfeedingTime}</td><td>${entry.notes}</td>
-      <td><button onclick="deleteEntry('${docSnap.id}')" class="text-red-500">Изтрий</button></td>
-    `;
-    tableBody.appendChild(row);
-  });
-
-  summary.innerHTML = `
-    Общо адаптирано мляко: <strong>${totalFormula} мл</strong><br>
-    Общо кърма: <strong>${totalBreastmilk} мл</strong><br>
-    Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong><br>
-    Кърмения: <strong>${countBreastfeeding}</strong>
-  `;
-}
-
-window.deleteEntry = async function (id) {
-  const user = auth.currentUser;
-  if (!user) return;
-  const ref = doc(db, "babyData", user.uid, "entries", id);
-  await deleteDoc(ref);
-  renderTable(user.uid);
-};
-
-dateInput.addEventListener("change", () => {
-  const user = auth.currentUser;
-  if (user) renderTable(user.uid);
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return alert("Не си логнат.");
-  const formData = new FormData(form);
-  const entry = {
-    date: formData.get("date"),
-    time: formData.get("time"),
-    formula: Number(formData.get("formula") || 0),
-    breastmilk: Number(formData.get("breastmilk") || 0),
-    poo: formData.get("poo") ? "Да" : "Не",
-    pee: formData.get("pee") ? "Да" : "Не",
-    breastfeeding: formData.get("breastfeeding") ? "Да" : "Не",
-    breastfeedingTime: formData.get("breastfeedingTime") || "",
-    notes: formData.get("notes"),
-    timestamp: serverTimestamp(),
-  };
-
-  const ref = collection(db, "babyData", user.uid, "entries");
-  await addDoc(ref, entry);
-  form.reset();
-  document.getElementById("breastfeedingTime").classList.add("hidden");
-  setTodayDate();
-  renderTable(user.uid);
-});
-
-document.getElementById("loginBtn").addEventListener("click", async () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const rememberMe = document.getElementById("rememberMe").checked;
-
-  const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-  await setPersistence(auth, persistence);
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    if (error.code === "auth/user-not-found") {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } else {
-      alert("Грешка при вход: " + error.message);
+    function setTodayDate() {
+      const today = new Date().toISOString().split("T")[0];
+      dateInput.value = today;
     }
-  }
-});
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
-});
+    function renderUI(user) {
+      if (user) {
+        authSection.style.display = "none";
+        appSection.style.display = "block";
+        setTodayDate();
+        renderTable(user.uid);
+      } else {
+        authSection.style.display = "block";
+        appSection.style.display = "none";
+      }
+    }
 
-onAuthStateChanged(auth, (user) => {
-  renderUI(user);
-});
+    async function renderTable(userId) {
+      tableBody.innerHTML = "";
+      const currentDate = dateInput.value;
+      const ref = collection(db, "babyData", userId, "entries");
+      const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
+      const snapshot = await getDocs(q);
 
-    </script>
-  </body>
+      snapshot.forEach(docSnap => {
+        const e = docSnap.data();
+        const row = document.createElement("tr");
+        row.className = "table__row";
+        row.innerHTML = `
+          <td class="table__cell" data-label="Дата">${e.date}</td>
+          <td class="table__cell" data-label="Час">${e.time}</td>
+          <td class="table__cell" data-label="Адаптирано">${e.formula}</td>
+          <td class="table__cell" data-label="Кърма">${e.breastmilk}</td>
+          <td class="table__cell" data-label="Акал">${e.poo}</td>
+          <td class="table__cell" data-label="Пишал">${e.pee}</td>
+          <td class="table__cell" data-label="Кърмене (мин)">${e.breastfeedingTime}</td>
+          <td class="table__cell" data-label="Забележки">${e.notes}</td>
+          <td class="table__cell" data-label="Действия">
+            <button onclick="deleteEntry('${docSnap.id}')">Изтрий</button>
+          </td>`;
+        tableBody.appendChild(row);
+      });
+    }
+
+    window.deleteEntry = async function(id) {
+      const user = auth.currentUser;
+      if (!user) return;
+      const ref = doc(db, "babyData", user.uid, "entries", id);
+      await deleteDoc(ref);
+      renderTable(user.uid);
+    };
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const rememberMe = document.getElementById("rememberMe").checked;
+      const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        if (error.code === "auth/user-not-found") {
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          alert("Грешка при вход: " + error.message);
+        }
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    form.breastfeeding.addEventListener("change", () => {
+      document.getElementById("breastfeedingTimeContainer").style.display =
+        form.breastfeeding.checked ? "block" : "none";
+    });
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) return alert("Не си логнат.");
+      const fd = new FormData(form);
+      const entry = {
+        date: fd.get("date"),
+        time: fd.get("time"),
+        formula: Number(fd.get("formula") || 0),
+        breastmilk: Number(fd.get("breastmilk") || 0),
+        poo: fd.get("poo") ? "Да" : "Не",
+        pee: fd.get("pee") ? "Да" : "Не",
+        breastfeeding: fd.get("breastfeeding") ? "Да" : "Не",
+        breastfeedingTime: fd.get("breastfeedingTime") || "",
+        notes: fd.get("notes"),
+        timestamp: serverTimestamp()
+      };
+      const ref = collection(db, "babyData", user.uid, "entries");
+      await addDoc(ref, entry);
+      form.reset();
+      setTodayDate();
+      renderTable(user.uid);
+    });
+
+    dateInput.addEventListener("change", () => {
+      const user = auth.currentUser;
+      if (user) renderTable(user.uid);
+    });
+
+    onAuthStateChanged(auth, (user) => renderUI(user));
+  </script>
+</body>
 </html>
