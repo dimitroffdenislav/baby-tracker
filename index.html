@@ -183,166 +183,165 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, query,
-      where, orderBy, deleteDoc, doc, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      onAuthStateChanged, setPersistence, browserLocalPersistence,
-      browserSessionPersistence, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, query,
+    where, orderBy, deleteDoc, doc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    onAuthStateChanged, setPersistence, browserLocalPersistence,
+    browserSessionPersistence, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const config = {
-      apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
-      authDomain: "baby-tracker-fab40.firebaseapp.com",
-      projectId: "baby-tracker-fab40",
-      storageBucket: "baby-tracker-fab40.appspot.com",
-      messagingSenderId: "60430088674",
-      appId: "1:60430088674:web:4eaff3297a1411e70b21bb"
-    };
+  const config = {
+    apiKey: "AIzaSyBgeoFmRG4PWgB4qNtp6u_AVLyoqD5m8CE",
+    authDomain: "baby-tracker-fab40.firebaseapp.com",
+    projectId: "baby-tracker-fab40",
+    storageBucket: "baby-tracker-fab40.appspot.com",
+    messagingSenderId: "60430088674",
+    appId: "1:60430088674:web:4eaff3297a1411e70b21bb"
+  };
 
-    const app = initializeApp(config);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+  const app = initializeApp(config);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-    const authSection = document.getElementById("authSection");
-    const appSection = document.getElementById("appSection");
-    const form = document.getElementById("entryForm");
-    const tableBody = document.getElementById("dataTable");
-    const dateInput = form.querySelector("input[name='date']");
+  const authSection = document.getElementById("authSection");
+  const appSection = document.getElementById("appSection");
+  const form = document.getElementById("entryForm");
+  const tableBody = document.getElementById("dataTable");
+  const summary = document.getElementById("summary");
+  const dateInput = form.querySelector("input[name='date']");
 
-    function setTodayDate() {
-      const today = new Date().toISOString().split("T")[0];
-      dateInput.value = today;
+  function setTodayDate() {
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.value = today;
+  }
+
+  function renderUI(user) {
+    if (user) {
+      authSection.style.display = "none";
+      appSection.style.display = "block";
+      setTodayDate();
+      renderTable(user.uid);
+    } else {
+      authSection.style.display = "block";
+      appSection.style.display = "none";
     }
+  }
 
-    function renderUI(user) {
-      if (user) {
-        authSection.style.display = "none";
-        appSection.style.display = "block";
-        setTodayDate();
-        renderTable(user.uid);
-      } else {
-        authSection.style.display = "block";
-        appSection.style.display = "none";
-      }
-    }
+  async function renderTable(userId) {
+    tableBody.innerHTML = "";
+    summary.innerHTML = "";
 
-    async function renderTable(userId) {
-      tableBody.innerHTML = "";
-      const currentDate = dateInput.value;
-      const ref = collection(db, "babyData", userId, "entries");
-      const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
-      const snapshot = await getDocs(q);
-
-      snapshot.forEach(docSnap => {
-        const e = docSnap.data();
-        const row = document.createElement("tr");
-        row.className = "table__row";
-        row.innerHTML = `
-          <td class="table__cell" data-label="Дата">${e.date}</td>
-          <td class="table__cell" data-label="Час">${e.time}</td>
-          <td class="table__cell" data-label="Адаптирано">${e.formula}</td>
-          <td class="table__cell" data-label="Кърма">${e.breastmilk}</td>
-          <td class="table__cell" data-label="Акал">${e.poo}</td>
-          <td class="table__cell" data-label="Пишал">${e.pee}</td>
-          <td class="table__cell" data-label="Кърмене (мин)">${e.breastfeedingTime}</td>
-          <td class="table__cell" data-label="Забележки">${e.notes}</td>
-          <td class="table__cell" data-label="Действия">
-            <button onclick="deleteEntry('${docSnap.id}')">Изтрий</button>
-          </td>`;
-        tableBody.appendChild(row);
-      });
-    }
+    const currentDate = dateInput.value;
+    const ref = collection(db, "babyData", userId, "entries");
+    const q = query(ref, where("date", "==", currentDate), orderBy("timestamp"));
+    const snapshot = await getDocs(q);
 
     let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
 
-snapshot.forEach(docSnap => {
-  const entry = docSnap.data();
-  totalFormula += entry.formula || 0;
-  totalBreastmilk += entry.breastmilk || 0;
-  if (entry.poo === "Да") countPoo++;
-  if (entry.pee === "Да") countPee++;
-  if (entry.breastfeeding === "Да") countBreastfeeding++;
-  // същия код за реда
-});
+    snapshot.forEach(docSnap => {
+      const e = docSnap.data();
+      totalFormula += e.formula || 0;
+      totalBreastmilk += e.breastmilk || 0;
+      if (e.poo === "Да") countPoo++;
+      if (e.pee === "Да") countPee++;
+      if (e.breastfeeding === "Да") countBreastfeeding++;
 
-const summaryBox = document.getElementById("summary");
-summaryBox.innerHTML = `
-  <p>Общо адаптирано мляко: <strong>${totalFormula} мл</strong></p>
-  <p>Общо кърма: <strong>${totalBreastmilk} мл</strong></p>
-  <p>Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong></p>
-  <p>Кърмения: <strong>${countBreastfeeding}</strong></p>
-`;
+      const row = document.createElement("tr");
+      row.className = "table__row";
+      row.innerHTML = `
+        <td class="table__cell" data-label="Дата">${e.date}</td>
+        <td class="table__cell" data-label="Час">${e.time}</td>
+        <td class="table__cell" data-label="Адаптирано">${e.formula}</td>
+        <td class="table__cell" data-label="Кърма">${e.breastmilk}</td>
+        <td class="table__cell" data-label="Акал">${e.poo}</td>
+        <td class="table__cell" data-label="Пишал">${e.pee}</td>
+        <td class="table__cell" data-label="Кърмене (мин)">${e.breastfeedingTime}</td>
+        <td class="table__cell" data-label="Забележки">${e.notes}</td>
+        <td class="table__cell" data-label="Действия">
+          <button onclick="deleteEntry('${docSnap.id}')">Изтрий</button>
+        </td>`;
+      tableBody.appendChild(row);
+    });
 
-    window.deleteEntry = async function(id) {
-      const user = auth.currentUser;
-      if (!user) return;
-      const ref = doc(db, "babyData", user.uid, "entries", id);
-      await deleteDoc(ref);
-      renderTable(user.uid);
-    };
+    summary.innerHTML = `
+      <p>Общо адаптирано мляко: <strong>${totalFormula} мл</strong></p>
+      <p>Общо кърма: <strong>${totalBreastmilk} мл</strong></p>
+      <p>Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong></p>
+      <p>Кърмения: <strong>${countBreastfeeding}</strong></p>
+    `;
+  }
 
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const rememberMe = document.getElementById("rememberMe").checked;
-      const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-      await setPersistence(auth, persistence);
+  window.deleteEntry = async function(id) {
+    const user = auth.currentUser;
+    if (!user) return;
+    const ref = doc(db, "babyData", user.uid, "entries", id);
+    await deleteDoc(ref);
+    renderTable(user.uid);
+  };
 
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        if (error.code === "auth/user-not-found") {
-          await createUserWithEmailAndPassword(auth, email, password);
-        } else {
-          alert("Грешка при вход: " + error.message);
-        }
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const rememberMe = document.getElementById("rememberMe").checked;
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        alert("Грешка при вход: " + error.message);
       }
-    });
+    }
+  });
 
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-    });
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+  });
 
-    form.breastfeeding.addEventListener("change", () => {
-      document.getElementById("breastfeedingTimeContainer").style.display =
-        form.breastfeeding.checked ? "block" : "none";
-    });
+  form.breastfeeding.addEventListener("change", () => {
+    document.getElementById("breastfeedingTimeContainer").style.display =
+      form.breastfeeding.checked ? "block" : "none";
+  });
 
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return alert("Не си логнат.");
-      const fd = new FormData(form);
-      const entry = {
-        date: fd.get("date"),
-        time: fd.get("time"),
-        formula: Number(fd.get("formula") || 0),
-        breastmilk: Number(fd.get("breastmilk") || 0),
-        poo: fd.get("poo") ? "Да" : "Не",
-        pee: fd.get("pee") ? "Да" : "Не",
-        breastfeeding: fd.get("breastfeeding") ? "Да" : "Не",
-        breastfeedingTime: fd.get("breastfeedingTime") || "",
-        notes: fd.get("notes"),
-        timestamp: serverTimestamp()
-      };
-      const ref = collection(db, "babyData", user.uid, "entries");
-      await addDoc(ref, entry);
-      form.reset();
-      setTodayDate();
-      renderTable(user.uid);
-    });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return alert("Не си логнат.");
+    const fd = new FormData(form);
+    const entry = {
+      date: fd.get("date"),
+      time: fd.get("time"),
+      formula: Number(fd.get("formula") || 0),
+      breastmilk: Number(fd.get("breastmilk") || 0),
+      poo: fd.get("poo") ? "Да" : "Не",
+      pee: fd.get("pee") ? "Да" : "Не",
+      breastfeeding: fd.get("breastfeeding") ? "Да" : "Не",
+      breastfeedingTime: fd.get("breastfeedingTime") || "",
+      notes: fd.get("notes"),
+      timestamp: serverTimestamp()
+    };
+    const ref = collection(db, "babyData", user.uid, "entries");
+    await addDoc(ref, entry);
+    form.reset();
+    setTodayDate();
+    renderTable(user.uid);
+  });
 
-    dateInput.addEventListener("change", () => {
-      const user = auth.currentUser;
-      if (user) renderTable(user.uid);
-    });
+  dateInput.addEventListener("change", () => {
+    const user = auth.currentUser;
+    if (user) renderTable(user.uid);
+  });
 
-    onAuthStateChanged(auth, (user) => renderUI(user));
-  </script>
+  onAuthStateChanged(auth, (user) => renderUI(user));
+</script>
+
 </body>
 </html>
