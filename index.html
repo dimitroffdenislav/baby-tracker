@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Дневен режим на бебето</title>
     <script src="https://cdn.tailwindcss.com"></script>
+     <style>
+      @media (max-width: 768px) {
+        table thead {
+          display: none;
+        }
+        table tbody tr {
+          display: block;
+          margin-bottom: 1rem;
+          background-color: #fff;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.05);
+        }
+        table td {
+          display: flex;
+          justify-content: space-between;
+          padding: 0.5rem 0;
+          border: none;
+        }
+        table td::before {
+          content: attr(data-label);
+          font-weight: bold;
+        }
+      }
+    </style>
   </head>
   <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
     <div id="authSection" class="w-full max-w-md bg-white p-6 rounded shadow-md">
