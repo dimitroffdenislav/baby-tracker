@@ -177,6 +177,9 @@
           <tbody id="dataTable"></tbody>
         </table>
       </div>
+
+      <div id="summary" class="summary"></div>
+
     </div>
   </div>
 
@@ -254,6 +257,26 @@
         tableBody.appendChild(row);
       });
     }
+
+    let totalFormula = 0, totalBreastmilk = 0, countPoo = 0, countPee = 0, countBreastfeeding = 0;
+
+snapshot.forEach(docSnap => {
+  const entry = docSnap.data();
+  totalFormula += entry.formula || 0;
+  totalBreastmilk += entry.breastmilk || 0;
+  if (entry.poo === "Да") countPoo++;
+  if (entry.pee === "Да") countPee++;
+  if (entry.breastfeeding === "Да") countBreastfeeding++;
+  // същия код за реда
+});
+
+const summaryBox = document.getElementById("summary");
+summaryBox.innerHTML = `
+  <p>Общо адаптирано мляко: <strong>${totalFormula} мл</strong></p>
+  <p>Общо кърма: <strong>${totalBreastmilk} мл</strong></p>
+  <p>Акал: <strong>${countPoo}</strong> | Пишал: <strong>${countPee}</strong></p>
+  <p>Кърмения: <strong>${countBreastfeeding}</strong></p>
+`;
 
     window.deleteEntry = async function(id) {
       const user = auth.currentUser;
