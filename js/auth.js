@@ -19,6 +19,4 @@ export const login = async (email, pwd, remember) => {
   }
 };
 
-console.log(1234)
-
 export const logout = () => signOut(auth);

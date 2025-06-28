@@ -135,6 +135,3 @@ onAuthStateChanged(auth, user => {
     els.auth.hidden = false;
   }
 });
-
-
-console.log(1234)

@@ -12,5 +12,3 @@ const app = initializeApp({
 });
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-console.log(1234)

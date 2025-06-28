@@ -4,8 +4,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
 
-
-
 export const addEntry = (userId, entry) =>
   addDoc(collection(db, 'babyData', userId, 'entries'), { ...entry, timestamp: serverTimestamp() });
 
@@ -25,5 +23,3 @@ export const listenEntries = (userId, date, cb) => {
   );
   return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 };
-
-console.log(1234)
