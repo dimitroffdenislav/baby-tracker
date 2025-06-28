@@ -1,0 +1,76 @@
+::selection {
+	/* background-color: var(--e-global-color-c33bfc3);
+	color: var(--e-global-color-primary); */
+}
+
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	min-width: 320px;
+	font-family: "Nunito", sans-serif;
+	background-color: #F0F4F8;
+}
+
+a {
+	color: inherit;
+	text-decoration: underline;
+
+	@include hover {
+		text-decoration: none;
+	}
+
+	&[href^='tel'] {
+		text-decoration: none;
+	}
+}
+
+
+.h1,
+h1,
+.h2,
+h2,
+.h3,
+h3,
+.h4,
+h4,
+.h5,
+h5,
+.h6,
+h6 {
+	margin-bottom: calc(1.3 * 0.5em);
+
+}
+
+.h1,
+h1 {
+	font-size: clamp(2.125rem, 4.39vw + 1.247rem, 4.375rem);
+}
+
+.h2,
+h2 {}
+
+.h3,
+h3 {}
+
+.h4,
+h4 {}
+
+.h5,
+h5 {}
+
+.h6,
+h6 {}
+
+
+p,
+ul,
+ol,
+dl,
+hr,
+table,
+blockquote {
+	margin-bottom: calc(1.3 * 0.5em);
+}
