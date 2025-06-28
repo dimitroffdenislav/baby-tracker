@@ -1,4 +1,4 @@
- const CACHE_NAME = 'baby-tracker-v1';
+const CACHE_NAME = 'baby-tracker-v1';
  const FILES_TO_CACHE = [
    '/',
    '/index.html',
