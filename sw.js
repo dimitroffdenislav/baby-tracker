@@ -1,4 +1,4 @@
-const CACHE_NAME = 'baby-tracker-v2';
+const CACHE_NAME = 'baby-tracker-v3';
 const BASE_PATH = '/baby-tracker';
 const FILES_TO_CACHE = [
   `${BASE_PATH}/`,
