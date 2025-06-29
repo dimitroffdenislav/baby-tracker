@@ -20,9 +20,9 @@ const today = () => new Date().toISOString().split('T')[0];
 const isTrue = v => [true, '✅', 'Да'].includes(v);
 const cell = (val, label) => `<td data-label="${label}">${val}</td>`;
 const buttons = (id, edit) => `
-  <td data-label="Действия">
-    <button onclick="toggleEdit('${id}')">${edit ? '💾' : '✏️'}</button>
-    <button onclick="del('${id}')">🗑️</button>
+  <td class="table__cell">
+    <button class="table__edit" onclick="toggleEdit('${id}')">${edit ? '💾' : '✏️'}</button>
+    <button class="table__delete" onclick="del('${id}')">🗑️</button>
   </td>`;
 
 const render = e => `
