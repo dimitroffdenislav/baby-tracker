@@ -10,9 +10,8 @@ const app = initializeApp({
   messagingSenderId: "60430088674",
   appId: "1:60430088674:web:4eaff3297a1411e70b21bb"
 });
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 
+export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
   useFetchStreams: false
