@@ -58,12 +58,18 @@ const updateUI = list => {
     return acc;
   }, {});
 
+  const feedCounts = {
+    formulaMeals: sorted.filter(e => Number(e.formula) > 0).length,
+    breastmilkMeals: sorted.filter(e => Number(e.breastmilk) > 0).length
+  };
+
   els.summary.innerHTML = `
-    <p>Адаптирано: <strong>${sums.formula}мл</strong></p>
-    <p>Кърма: <strong>${sums.breastmilk}мл</strong></p>
+    <p>Брой ядения (адаптирано): <strong>${feedCounts.formulaMeals}</strong></p>
+    <p>Адаптирано мл: <strong>${sums.formula} мл</strong></p>
+    <p>Кърма мл: <strong>${sums.breastmilk} мл</strong></p>
     <p>Акал: <strong>${counts.poo}</strong></p>
     <p>Пишал: <strong>${counts.pee}</strong></p>
-    <p>Кърмене: <strong>${counts.breastfeeding || '❌'}</strong></p>
+    <p>Кърмене: <strong>${counts.breastfeeding}</strong></p>
   `;
 };
 
