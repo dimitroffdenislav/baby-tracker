@@ -19,3 +19,6 @@
     padding: 5px 15px 4px;
     border-radius: 8px;
 }
+
+.summary strong.is-red {
+    background-color: #FF4E4E;
