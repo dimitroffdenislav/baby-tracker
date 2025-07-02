@@ -67,7 +67,7 @@ const updateUI = list => {
 
 
   els.summary.innerHTML = `
-    <p>Общо хранения: <strong>${feedCounts.totalMeals}</strong></p>
+    <p>Общо хранения: <strong class="is-red">${feedCounts.totalMeals}</strong></p>
     <p>Ядения с адаптирано мляко: <strong>${feedCounts.formulaMeals}</strong></p>
     <p>Ядения с кърма: <strong>${feedCounts.breastmilkMeals}</strong></p>
     <p>Събития кърмене: <strong>${feedCounts.breastfeedingEvents}</strong></p>
