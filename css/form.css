@@ -25,8 +25,7 @@
     padding: 15px;
     margin-top: 5px;
     resize: none;
-    -webkit-appearance: none;
-    appearance: none;
+    background-color: #fff;
 }
 
 .table textarea,
