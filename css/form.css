@@ -13,7 +13,7 @@
     padding: 15px;
 }
 
-.form__group:has(.form__button) {
+.form__group--notes {
     width: 100%;
 }
 
