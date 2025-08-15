@@ -1,99 +1,144 @@
 <!DOCTYPE html>
 <html lang="bg">
-
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Дневен режим на бебето</title>
-	<link rel="stylesheet" href="css/style.css" />
-	  <link rel="icon" type="image/x-icon" href="favicon.ico">
-
-
-	<link rel="manifest" href="manifest.json">
- 	<meta name="theme-color" content="#4CAF50">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Дневен режим на бебето</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
 </head>
-
 <body>
-	<div class="wrapper">
-		<div class="auth" id="authSection" hidden>
-			<h1 class="auth__title">Вход</h1>
-			<div class="auth__field">
-				<input type="email" id="email" placeholder="Имейл" class="auth__input" />
-			</div>
-			<div class="auth__field">
-				<input type="password" id="password" placeholder="Парола" class="auth__input" />
-			</div>
-			<div class="auth__checkbox">
-				<input type="checkbox" id="rememberMe" />
-				<label for="rememberMe">Запомни ме</label>
-			</div>
-			<button id="loginBtn" class="auth__button">Вход</button>
-		</div>
+  <div class="wrapper">
+    <!-- AUTH -->
+    <div class="auth" id="authSection" hidden>
+      <h1 class="auth__title">Вход</h1>
+      <div class="auth__field">
+        <input type="email" id="email" placeholder="Имейл" class="auth__input" />
+      </div>
+      <div class="auth__field">
+        <input type="password" id="password" placeholder="Парола" class="auth__input" />
+      </div>
+      <div class="auth__checkbox">
+        <input type="checkbox" id="rememberMe" />
+        <label for="rememberMe">Запомни ме</label>
+      </div>
+      <button id="loginBtn" class="auth__button">Вход</button>
+    </div>
 
-		<div id="appSection" class="section-app" hidden>
-			<button id="logoutBtn" class="btn-logout">Изход</button>
-			<form id="entryForm" class="form">
-				<div class="form__group">
-					<label>Дата:<br /><input type="date" name="date" required class="form__input" /></label>
-				</div>
-				<div class="form__group">
-					<label>Час:<br /><input type="time" name="time" required class="form__input" /></label>
-				</div>
-				<div class="form__group">
-					<label>Адаптирано мляко (мл):<br /><input type="number" name="formula"
-							class="form__input" /></label>
-				</div>
-				<div class="form__group">
-					<label>Кърма (мл):<br /><input type="number" name="breastmilk" class="form__input" /></label>
-				</div>
-				<div class="form__group form__group--checkboxes">
-					<label><input type="checkbox" name="poo" /> 💩 Акал</label>
-					<label><input type="checkbox" name="pee" /> 💧 Пишал</label>
-					<label><input type="checkbox" id="breastfeeding" name="breastfeeding" /> 💦 Кърмене</label>
-					<div id="breastfeedingTimeContainer" style="display: none;">
-						<label>Време на кърмене (мин):<br /><input type="number" name="breastfeedingTime"
-								class="form__input" /></label>
-					</div>
-				</div>
-				<div class="form__group">
-					<label>Забележки:<br /><textarea name="notes" class="form__textarea"></textarea></label>
-				</div>
-				<button type="submit" class="form__button">Добави</button>
-			</form>
+    <!-- APP -->
+    <div id="appSection" class="section-app" hidden>
+      <button id="logoutBtn" class="btn-logout">Изход</button>
 
-			<div class="table-wrapper">
-				<table class="table">
-					<thead>
-						<tr class="table__row">
-							<th class="table__header">Дата</th>
-							<th class="table__header">Час</th>
-							<th class="table__header">Адаптиранo (мл)</th>
-							<th class="table__header">Кърма (мл)</th>
-							<th class="table__header">Акал</th>
-							<th class="table__header">Пишал</th>
-							<th class="table__header">Кърмене (мин)</th>
-							<th class="table__header">Забележки</th>
-							<th class="table__header">Действия</th>
-						</tr>
-					</thead>
-					<tbody id="dataTable"></tbody>
-				</table>
-			</div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn is-active" data-tab="feedingTab">Хранене</button>
+        <button class="tab-btn" data-tab="sleepTab">Сън</button>
+      </div>
 
-			<div id="summary" class="summary"></div>
-		</div>
-	</div>
+      <!-- Shared date -->
+      <div class="form__group">
+        <label>Дата:<br />
+          <input type="date" name="date" required class="form__input" />
+        </label>
+      </div>
 
-	<script>
-	if ('serviceWorker' in navigator) {
+      <!-- FEEDING TAB -->
+      <section id="feedingTab" class="tab is-active">
+        <form id="entryForm" class="form">
+          <div class="form__group">
+            <label>Час:<br /><input type="time" name="time" required class="form__input" /></label>
+          </div>
+          <div class="form__group">
+            <label>Адаптирано мляко (мл):<br /><input type="number" name="formula" class="form__input" /></label>
+          </div>
+          <div class="form__group">
+            <label>Кърма (мл):<br /><input type="number" name="breastmilk" class="form__input" /></label>
+          </div>
+          <div class="form__group form__group--checkboxes">
+            <label><input type="checkbox" name="poo" /> 💩 Акал</label>
+            <label><input type="checkbox" name="pee" /> 💧 Пишал</label>
+            <label><input type="checkbox" id="breastfeeding" name="breastfeeding" /> 💦 Кърмене</label>
+            <div id="breastfeedingTimeContainer" style="display:none;">
+              <label>Време на кърмене (мин):<br /><input type="number" name="breastfeedingTime" class="form__input" /></label>
+            </div>
+          </div>
+          <div class="form__group">
+            <label>Забележки:<br /><textarea name="notes" class="form__textarea"></textarea></label>
+          </div>
+          <button type="submit" class="form__button">Добави</button>
+        </form>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr class="table__row">
+                <th class="table__header">Дата</th>
+                <th class="table__header">Час</th>
+                <th class="table__header">Адаптиранo (мл)</th>
+                <th class="table__header">Кърма (мл)</th>
+                <th class="table__header">Акал</th>
+                <th class="table__header">Пишал</th>
+                <th class="table__header">Кърмене</th>
+                <th class="table__header">Забележки</th>
+                <th class="table__header">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="dataTable"></tbody>
+          </table>
+        </div>
+
+        <div id="summary" class="summary"></div>
+      </section>
+
+      <!-- SLEEP TAB -->
+      <section id="sleepTab" class="tab">
+        <form id="sleepForm" class="form">
+          <div class="form__group">
+            <label>Начало (час):<br /><input type="time" name="start" required class="form__input" /></label>
+          </div>
+          <div class="form__group">
+            <label>Край (час):<br /><input type="time" name="end" required class="form__input" /></label>
+          </div>
+          <div class="form__group">
+            <label>Забележки:<br /><textarea name="notes" class="form__textarea"></textarea></label>
+          </div>
+          <button type="submit" class="form__button">Добави сън</button>
+        </form>
+
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr class="table__row">
+                <th class="table__header">Дата</th>
+                <th class="table__header">Начало</th>
+                <th class="table__header">Край</th>
+                <th class="table__header">Продължителност</th>
+                <th class="table__header">Забележки</th>
+                <th class="table__header">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="sleepTable"></tbody>
+          </table>
+        </div>
+
+        <div id="sleepSummary" class="summary"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/baby-tracker/sw.js', { scope: '/baby-tracker/' })
           .then(() => console.log('SW registered for /baby-tracker/'))
           .catch(err => console.error('SW registration failed', err));
       });
     }
- </script>
-	<script type="module" src="/baby-tracker/js/app.js"></script>
-</body>
+  </script>
 
+  <!-- Важно: пътят да съвпада със структурата ти -->
+  <script type="module" src="/baby-tracker/js/app.js"></script>
+</body>
 </html>
