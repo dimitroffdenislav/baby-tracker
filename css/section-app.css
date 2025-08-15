@@ -13,3 +13,31 @@
     border-radius: 10px;
     margin-bottom: 30px;
 }
+
+.tabs {
+    dispaly: flex;
+    gap: 10px;
+}
+
+.tab {
+    display: none;
+}
+
+.tab.is-active {
+    display: block;
+}
+
+.tab-btn {
+    appearance: none;
+    padding: 20px 40px;
+    text-decoration: none;
+    background-color: #417FC8;
+    border-radius: 10px;
+    margin: 20px auto 0;
+    color: #fff;
+    border: none;
+}
+
+.tab-btn.is-active {
+    background-color: #f44336;
+}
