@@ -23,7 +23,6 @@ export const listenEntries = (userId, date, cb) => {
   const q = query(
     collection(db, 'babyData', userId, 'entries'),
     where('date', '==', date),
-    orderBy('time'),
     orderBy('timestamp')
   );
   return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -49,8 +48,7 @@ export const listenSleep = (userId, date, cb) => {
   const q = query(
     collection(db, 'babyData', userId, 'sleep'),
     where('date', '==', date),
-    orderBy('start'),
-    orderBy('timestamp')
+    orderBy('start')
   );
   return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 };
