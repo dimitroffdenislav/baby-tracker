@@ -98,3 +98,46 @@ export const listenSleep = (userId, date, cb) => {
     'sleep'
   );
 };
+
+/* =================== PUMPS (Изцеждане) =================== */
+export const addPump = (userId, entry) =>
+  addDoc(collection(db, 'babyData', userId, 'pumps'), {
+    ...entry, // { date, time, amount, notes? }
+    timestamp: serverTimestamp()
+  });
+
+export const deletePump = (userId, id) =>
+  deleteDoc(doc(db, 'babyData', userId, 'pumps', id));
+
+export const updatePump = (userId, id, data) =>
+  updateDoc(doc(db, 'babyData', userId, 'pumps', id), data);
+
+export const getPumpEntry = async (userId, id) => {
+  const snap = await getDoc(doc(db, 'babyData', userId, 'pumps', id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+// ✅ НЯМА orderBy → не иска композитен индекс
+export const listenPump = (userId, date, cb) => {
+  const q = query(
+    collection(db, 'babyData', userId, 'pumps'),
+    where('date', '==', date)
+  );
+  return handleSnap(
+    q,
+    d => ({ id: d.id, ...d.data() }),
+    docs => {
+      // клиентско сортиране: time ↑ (като при храненията)
+      const sorted = [...docs].sort((a, b) => {
+        const ta = a.time || '', tb = b.time || '';
+        if (ta !== tb) return ta.localeCompare(tb);
+        const at = a.timestamp?.toMillis?.() ?? 0;
+        const bt = b.timestamp?.toMillis?.() ?? 0;
+        if (at !== bt) return at - bt;
+        return a.id.localeCompare(b.id);
+      });
+      cb(sorted);
+    },
+    'pumps'
+  );
+};
