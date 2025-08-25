@@ -181,7 +181,7 @@ const clearSleep = () => {
 
 const updateSleepUI = list => {
   clearSleep();
-  const sorted = [...list].sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+  const sorted = [...list].sort((a, b) => (b.start || '').localeCompare(a.start || ''));
   els.sleepTable.innerHTML = sorted.map(renderSleep).join('');
   const total = sorted.reduce((acc, e) => acc + minutesDiff(e.start, e.end), 0);
   els.sleepSummary.innerHTML = `
@@ -189,7 +189,6 @@ const updateSleepUI = list => {
     <p>Общо сън за деня: <strong class="is-green">${fmtHM(total)}</strong></p>
   `;
 };
-
 /* ============ Sleep globals ============ */
 window.delSleep = id => deleteSleep(uid, id);
 
