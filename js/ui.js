@@ -224,7 +224,7 @@ window.toggleSleepEdit = async id => {
       date:  elements[0].value,
       start: elements[1].value,
       end:   elements[2].value,
-      notes: elements[4].value
+      notes: elements[3].value   // ← фикса
     };
     const err = validateSleep(updated.date, updated.start, updated.end);
     if (err) {
@@ -234,6 +234,7 @@ window.toggleSleepEdit = async id => {
     await updateSleep(uid, id, updated);
   }
 };
+
 
 /* ============ Pump helpers/render (Изцеждане) ============ */
 const pumpCell = (val, label) => `<td data-label="${label}">${val}</td>`;
