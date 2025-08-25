@@ -1,5 +1,8 @@
-import { addEntry, deleteEntry, updateEntry, listenEntries, getEntry } from './db.js';
-import { addSleep, deleteSleep, updateSleep, listenSleep, getSleepEntry } from './db.js';
+import {
+  addEntry, deleteEntry, updateEntry, listenEntries, getEntry,
+  addSleep, deleteSleep, updateSleep, listenSleep, getSleepEntry,
+  addPump, deletePump, updatePump, listenPump, getPumpEntry
+} from './db.js';
 import { login, logout } from './auth.js';
 import { auth } from './firebaseConfig.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -25,6 +28,10 @@ const els = {
   sleepForm:    $('#sleepForm'),
   sleepTable:   $('#sleepTable'),
   sleepSummary: $('#sleepSummary'),
+  // Pumps (Изцеждане)
+  pumpForm:    $('#pumpForm'),
+  pumpTable:   $('#pumpTable'),
+  pumpSummary: $('#pumpSummary'),
   // Shared
   date:   $('input[name=date]'),
   login:  $('#loginBtn'),
@@ -36,6 +43,7 @@ const els = {
 
 let unsubscribe = null;  // feeding
 let sleepUnsub  = null;  // sleep
+let pumpUnsub   = null;  // pumps
 let uid = null;
 
 /* ============ Tabs ============ */
@@ -65,7 +73,7 @@ const clear = () => {
 
 const updateUI = list => {
   clear();
-  const sorted = [...list].sort((a, b) => b.time?.localeCompare(a.time || '') || 0);
+  const sorted = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
   els.table.innerHTML = sorted.map(render).join('');
 
   const sums = sorted.reduce((acc, e) => {
@@ -227,6 +235,72 @@ window.toggleSleepEdit = async id => {
   }
 };
 
+/* ============ Pump helpers/render (Изцеждане) ============ */
+const pumpCell = (val, label) => `<td data-label="${label}">${val}</td>`;
+const pumpButtons = (id, edit) => `
+  <td class="table__cell">
+    <button class="table__edit" onclick="togglePumpEdit('${id}')">${edit ? '💾' : '✏️'}</button>
+    <button class="table__delete" onclick="delPump('${id}')">🗑️</button>
+  </td>`;
+const renderPump = e => `
+<tr>
+  ${pumpCell(e.date,'Дата')}${pumpCell(e.time,'Час')}
+  ${pumpCell(Number(e.amount) || 0,'Количество (мл)')}
+  ${pumpCell(e.notes || '','Забележки')}
+  ${pumpButtons(e.id,false)}
+</tr>`;
+
+const clearPump = () => {
+  els.pumpTable.innerHTML = '';
+  els.pumpSummary.innerHTML = '';
+};
+
+const updatePumpUI = list => {
+  clearPump();
+  // най-новото най-отгоре
+  const sorted = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+  els.pumpTable.innerHTML = sorted.map(renderPump).join('');
+
+  const totalAmount = sorted.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+  const sessions = sorted.filter(e => Number(e.amount) > 0).length;
+
+  els.pumpSummary.innerHTML = `
+    <p>Брой изцеждания: <strong>${sessions}</strong></p>
+    <p>Общо количество: <strong class="is-blue">${totalAmount} мл</strong></p>
+  `;
+};
+/* ============ Pump globals ============ */
+window.delPump = id => deletePump(uid, id);
+
+window.togglePumpEdit = async id => {
+  const btn = event.target;
+  const row = btn.closest('tr');
+
+  if (btn.textContent === '✏️') {
+    const data = await getPumpEntry(uid, id);
+    const inputs = [
+      `<td><input name="date" type="date" value="${data.date || (els.date.value || '')}"/></td>`,
+      `<td><input name="time" type="time" value="${data.time || ''}"/></td>`,
+      `<td><input name="amount" type="number" min="0" step="1" value="${Number(data.amount)||0}"/></td>`,
+      `<td><textarea name="notes">${data.notes || ''}</textarea></td>`
+    ].join('');
+    row.innerHTML = inputs + `
+      <td class="table__cell">
+        <button class="table__edit" onclick="togglePumpEdit('${id}')">💾</button>
+        <button class="table__delete" onclick="delPump('${id}')">🗑️</button>
+      </td>`;
+  } else {
+    const elements = Array.from(row.querySelectorAll('input,textarea'));
+    const updated = {
+      date:   elements[0].value,
+      time:   elements[1].value,
+      amount: parseInt(elements[2].value, 10) || 0,
+      notes:  elements[3].value || ''
+    };
+    await updatePump(uid, id, updated);
+  }
+};
+
 /* ============ Auth / events ============ */
 els.login.addEventListener('click', async () => {
   const email    = $('#email').value;
@@ -276,13 +350,29 @@ els.sleepForm.addEventListener('submit', async e => {
   els.sleepForm.reset();
 });
 
-// При смяна на дата – презареждаме и двете секции
+els.pumpForm?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = new FormData(els.pumpForm);
+  const entry = {
+    date:   els.date.value || today(),
+    time:   data.get('time'),
+    amount: parseInt(data.get('amount'), 10) || 0,
+    notes:  data.get('notes') || ''
+  };
+  await addPump(uid, entry);
+  els.pumpForm.reset();
+});
+
+// При смяна на дата – презареждаме и трите секции
 els.date.addEventListener('change', () => {
   if (!uid) return;
   unsubscribe && unsubscribe();
   sleepUnsub  && sleepUnsub();
+  pumpUnsub   && pumpUnsub();
+
   unsubscribe = listenEntries(uid, els.date.value, updateUI);
   sleepUnsub  = listenSleep(uid,   els.date.value, updateSleepUI);
+  pumpUnsub   = listenPump(uid,    els.date.value, updatePumpUI);
 });
 
 onAuthStateChanged(auth, user => {
@@ -294,8 +384,11 @@ onAuthStateChanged(auth, user => {
 
     unsubscribe && unsubscribe();
     sleepUnsub  && sleepUnsub();
+    pumpUnsub   && pumpUnsub();
+
     unsubscribe = listenEntries(uid, els.date.value, updateUI);
     sleepUnsub  = listenSleep(uid,   els.date.value, updateSleepUI);
+    pumpUnsub   = listenPump(uid,    els.date.value, updatePumpUI);
   } else {
     uid = null;
     els.app.hidden  = true;
@@ -303,8 +396,10 @@ onAuthStateChanged(auth, user => {
 
     clear();
     clearSleep();
+    clearPump();
 
     unsubscribe = null;
     sleepUnsub  = null;
+    pumpUnsub   = null;
   }
 });
