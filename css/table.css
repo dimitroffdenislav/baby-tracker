@@ -78,3 +78,15 @@
   border-radius: 8px; padding: 6px 10px; cursor: pointer; line-height: 1;
 }
 .is-muted { color: #777; font-style: italic; }
+
+table.mini {
+    margin-top: 20px;
+}
+
+table.mini td,
+table.mini th {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #c8c8c8;
+} 
+    
