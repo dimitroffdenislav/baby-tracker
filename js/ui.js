@@ -17,51 +17,29 @@ const buttons = (id, edit) => `
     <button class="table__delete" onclick="del('${id}')">🗑️</button>
   </td>`;
 
-/* ---------- INGREDIENTS: чести за България ---------- */
+/* ---------- INGREDIENTS ---------- */
 const INGREDIENTS = [
-  // Зеленчуци
-  'морков','тиква','картоф','сладък картоф','пащърнак','целина (корен)','целина (стъбла)',
-  'ряпа','колраби','червено цвекло','топинамбур',
-  'тиквичка','краставица','зелен боб','зелен грах','царевица',
-  'карфиол','броколи','брюкселско зеле','бяло зеле','кисело зеле',
-  'коприва','спанак','манголд','лапад','домaт','чушка (сладка)','патладжан','праз','лук','чесън',
-  'гъби (печурка)',
-  // Плодове
-  'ябълка','круша','дюля','райска ябълка','банан','киви','смокиня',
-  'грозде (бяло)','грозде (червено)','диня','пъпеш',
-  'праскова','кайсия','слива','череша','вишна','мушмула',
-  'ягода','боровинка','малина','къпина','касис','цариградско грозде',
-  // Зърнени/каши
-  'ориз','оризова каша','овесени ядки','овесена каша','ечемик','грис','булгур','кус-кус',
-  'просо','елда','киноа','амарант','полента',
-  // Бобови
-  'червена леща','кафява леща','нахут','бял боб','бакла',
-  // Млечни/яйчни
+  'морков','тиква','картоф','сладък картоф','пащърнак','целина (корен)','целина (стъбла)','ряпа','колраби',
+  'червено цвекло','топинамбур','тиквичка','краставица','зелен боб','зелен грах','царевица',
+  'карфиол','броколи','брюкселско зеле','бяло зеле','кисело зеле','коприва','спанак','манголд','лапад',
+  'домaт','чушка (сладка)','патладжан','праз','лук','чесън','гъби (печурка)',
+  'ябълка','круша','дюля','райска ябълка','банан','киви','смокиня','грозде (бяло)','грозде (червено)',
+  'диня','пъпеш','праскова','кайсия','слива','череша','вишна','мушмула','ягода','боровинка','малина',
+  'къпина','касис','цариградско грозде',
+  'ориз','оризова каша','овесени ядки','овесена каша','ечемик','грис','булгур','кус-кус','просо',
+  'елда','киноа','амарант','полента','червена леща','кафява леща','нахут','бял боб','бакла',
   'кисело мляко','кефир','извара','рикота','сирене (обезсолено)','маскарпоне',
   'яйчен жълтък','цяло яйце (терм.)',
-  // Ядкови/семена (пасти)
   'тахан (сусамов)','фъстъчено масло (гладко)','бадемово масло (гладко)','ленено семе (смляно)','чия (накисната)',
-  // Мазнини
   'зехтин','масло','гхи','слънчогледово олио (студенопресовано)','рапично олио',
-  // Меса
   'пилешко','пуешко','заешко','телешко','агнешко','свинско (постно)','черен дроб',
-  // Риба/морски
   'сьомга','пъстърва','бяла риба','хек','треска','скумрия','сардина','тон','карагьоз','шаран',
-  // Други
   'копър','магданоз','мащерка','риган','ванилия (нат.)','костен бульон (безсолен)','ябълков пектин'
 ];
 
-// локално състояние за UI-то във формата
-let pureeItems = []; // [{ name, grams }]
+let pureeItems = [];
 
-const formatPureeCell = solidsArr => {
-  if (!Array.isArray(solidsArr) || !solidsArr.length) return '—';
-  return solidsArr.map(s => `${s.name} ${Number(s.grams)||0}г`).join(' + ');
-};
-const pureeTotalGrams = solidsArr =>
-  (Array.isArray(solidsArr) ? solidsArr.reduce((a, s) => a + (Number(s.grams)||0), 0) : 0);
-
-/* Elements */
+/* ---------- Elements ---------- */
 const els = {
   auth:   $('#authSection'),
   app:    $('#appSection'),
@@ -83,15 +61,15 @@ const els = {
   logout: $('#logoutBtn'),
   // Tabs
   tabBtns: document.querySelectorAll('.tab-btn'),
-  tabs:    document.querySelectorAll('.tab'),
+  tabs:    document.querySelectorAll('.tab')
 };
 
-let unsubscribe = null;  // feeding
-let sleepUnsub  = null;  // sleep
-let pumpUnsub   = null;  // pumps
+let unsubscribe = null;
+let sleepUnsub  = null;
+let pumpUnsub   = null;
 let uid = null;
 
-/* Tabs */
+/* ---------- Tabs ---------- */
 els.tabBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     els.tabBtns.forEach(b => b.classList.remove('is-active'));
@@ -101,116 +79,66 @@ els.tabBtns.forEach(btn => {
   });
 });
 
-/* -------- Puree UI във формата (комбинации) -------- */
-function createPureeUI() {
-  if (!els.form) return;
+/* ---------- Puree UI (чете от HTML) ---------- */
+const $pureeName = $('#pureeName');
+const $pureeQty  = $('#pureeQty');
+const $addPuree  = $('#addPuree');
+const $pureeList = $('#pureeList');
+const $solidsHid = $('#solidsJson');
+const $datalist  = $('#ingredients');
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'puree';
-  wrapper.innerHTML = `
-    <div class="puree__row">
-      <label>Пюре – съставка</label>
-      <input id="pureeName" list="ingredients" placeholder="напр. тиквичка" />
-      <datalist id="ingredients">
-        ${INGREDIENTS.map(x => `<option value="${x}">`).join('')}
-      </datalist>
-      <label>Количество (г)</label>
-      <input id="pureeQty" type="number" min="0" step="5" placeholder="грамове" />
-      <button type="button" id="addPuree">Добави</button>
-    </div>
-    <ul id="pureeList" class="puree__list"></ul>
-    <input type="hidden" name="solidsJson" id="solidsJson" />
-  `;
-  // поставяме го преди Забележки
-  const notesGroup = els.form.querySelector('.form__group--notes');
-  els.form.insertBefore(wrapper, notesGroup);
-
-  const $name = wrapper.querySelector('#pureeName');
-  const $qty  = wrapper.querySelector('#pureeQty');
-  const $list = wrapper.querySelector('#pureeList');
-  const $hid  = wrapper.querySelector('#solidsJson');
-
-  const rerender = () => {
-    $list.innerHTML = pureeItems.length
-      ? pureeItems.map((it, i) =>
-          `<li>
-             <span>${it.name} — <strong>${it.grams}г</strong></span>
-             <button type="button" data-i="${i}" class="puree__remove">✖</button>
-           </li>`).join('')
-      : '<li class="is-muted">Няма добавени съставки</li>';
-    $hid.value = JSON.stringify(pureeItems);
-  };
-
-  wrapper.addEventListener('click', e => {
-    const btn = e.target.closest('.puree__remove');
-    if (!btn) return;
-    const i = Number(btn.dataset.i);
-    if (!Number.isNaN(i)) {
-      pureeItems.splice(i, 1);
-      rerender();
-    }
-  });
-
-  wrapper.querySelector('#addPuree').addEventListener('click', () => {
-    const name = ($name.value || '').trim();
-    const grams = parseInt($qty.value, 10) || 0;
-    if (!name || grams <= 0) return;
-    pureeItems.push({ name, grams });
-    $name.value = '';
-    $qty.value = '';
-    rerender();
-  });
-
-  els.form.addEventListener('reset', () => {
-    pureeItems = [];
-    rerender();
-  });
-
-  rerender();
+if ($datalist) {
+  $datalist.innerHTML = INGREDIENTS.map(x => `<option value="${x}">`).join('');
 }
-createPureeUI();
 
-/* ---------- mini editor в реда (✏️) за solids ---------- */
-const solidRowHTML = (name = '', grams = '') => `
-  <div class="solid-row js-solid-row">
-    <input name="solid_name" list="ingredients" placeholder="съставка" value="${name || ''}" />
-    <input name="solid_grams" type="number" min="0" step="5" placeholder="г" value="${grams || ''}" />
-    <button type="button" class="solid-row__remove" onclick="removeSolidRow(this)">✖</button>
-  </div>
-`;
-window.addSolidRow = (btn) => {
-  const editor = btn.closest('.solids-editor');
-  const list = editor.querySelector('.solids-rows');
-  list.insertAdjacentHTML('beforeend', solidRowHTML());
-};
-window.removeSolidRow = (btn) => {
-  const row = btn.closest('.js-solid-row');
-  row?.remove();
-};
-const solidsEditorHTML = (solids = []) => `
-  <div class="solids-editor">
-    <div class="solids-rows">
-      ${(solids && solids.length ? solids : []).map(s => solidRowHTML(s.name, Number(s.grams)||0)).join('')}
-    </div>
-    <button type="button" class="btn--mini" onclick="addSolidRow(this)">+ съставка</button>
-    <datalist id="ingredients">
-      ${INGREDIENTS.map(x => `<option value="${x}">`).join('')}
-    </datalist>
-  </div>
-`;
-const collectSolidsFromRow = (row) => {
-  const names = row.querySelectorAll('input[name="solid_name"]');
-  const grams = row.querySelectorAll('input[name="solid_grams"]');
-  const out = [];
-  names.forEach((n, i) => {
-    const name = (n.value || '').trim();
-    const g = parseInt(grams[i]?.value, 10) || 0;
-    if (name && g > 0) out.push({ name, grams: g });
-  });
-  return out;
-};
+function renderPureeList() {
+  $pureeList.innerHTML = pureeItems.length
+    ? pureeItems.map((it, i) =>
+        `<li>
+           <span>${it.name} — <strong>${it.grams}г</strong></span>
+           <button type="button" class="puree__remove" data-i="${i}">✖</button>
+         </li>`).join('')
+    : '<li class="is-muted">Няма добавени съставки</li>';
+  $solidsHid.value = JSON.stringify(pureeItems);
+}
 
-/* ---------- Feeding render & UI ---------- */
+$addPuree?.addEventListener('click', () => {
+  const name = ($pureeName.value || '').trim();
+  const grams = parseInt($pureeQty.value, 10) || 0;
+  if (!name || grams <= 0) return;
+  pureeItems.push({ name, grams });
+  $pureeName.value = '';
+  $pureeQty.value = '';
+  renderPureeList();
+});
+
+$pureeList?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.puree__remove');
+  if (!btn) return;
+  const i = Number(btn.dataset.i);
+  if (!Number.isNaN(i)) {
+    pureeItems.splice(i, 1);
+    renderPureeList();
+  }
+});
+
+els.form?.addEventListener('reset', () => {
+  pureeItems = [];
+  renderPureeList();
+});
+
+renderPureeList();
+
+/* ---------- Helpers ---------- */
+const formatPureeCell = solidsArr =>
+  Array.isArray(solidsArr) && solidsArr.length
+    ? solidsArr.map(s => `${s.name} ${Number(s.grams)||0}г`).join(' + ')
+    : '—';
+
+const pureeTotalGrams = solidsArr =>
+  (Array.isArray(solidsArr) ? solidsArr.reduce((a, s) => a + (Number(s.grams)||0), 0) : 0);
+
+/* ---------- Feeding ---------- */
 const render = e => `
 <tr>
   ${cell(e.date,'Дата')}${cell(e.time,'Час')}
@@ -243,18 +171,8 @@ const updateUI = list => {
     return acc;
   }, {});
 
-  const feedCounts = {
-    formulaMeals: sorted.filter(e => Number(e.formula) > 0).length,
-    breastmilkMeals: sorted.filter(e => Number(e.breastmilk) > 0).length,
-    breastfeedingEvents: sorted.filter(e => isTrue(e.breastfeeding)).length,
-    totalMeals: sorted.filter(e =>
-      Number(e.formula) > 0 || Number(e.breastmilk) > 0 || isTrue(e.breastfeeding) || (e.solids && e.solids.length)
-    ).length
-  };
-
-  // Пюрета – тотал и разбивка
-  let solidsTotal = 0;
   const solidsByItem = {};
+  let solidsTotal = 0;
   sorted.forEach(e => {
     (e.solids || []).forEach(s => {
       const g = Number(s.grams) || 0;
@@ -262,18 +180,14 @@ const updateUI = list => {
       solidsByItem[s.name] = (solidsByItem[s.name] || 0) + g;
     });
   });
+
   const solidsTable = Object.keys(solidsByItem).length
-    ? `<table class="mini">
-         <thead><tr><th>Съставка</th><th>Общо (г)</th></tr></thead>
-         <tbody>
-           ${Object.entries(solidsByItem).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-         </tbody>
-       </table>`
+    ? `<table class="mini"><thead><tr><th>Съставка</th><th>Общо (г)</th></tr></thead><tbody>
+         ${Object.entries(solidsByItem).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+       </tbody></table>`
     : '<p class="is-muted">Няма пюрета за тази дата.</p>';
 
   els.summary.innerHTML = `
-    <p>Общо хранения: <strong class="is-red">${feedCounts.totalMeals}</strong></p>
-    <p>Ядения с адаптирано мляко: <strong>${feedCounts.formulaMeals}</strong></p>
     <p>Адаптирано мл: <strong>${sums.formula} мл</strong></p>
     <p>Кърма мл: <strong>${sums.breastmilk} мл</strong></p>
     <p>Акал: <strong>${counts.poo}</strong></p>
@@ -285,7 +199,6 @@ const updateUI = list => {
   `;
 };
 
-/* CRUD hooks за Feeding */
 window.del = id => deleteEntry(uid, id);
 
 window.toggleEdit = async id => {
@@ -297,45 +210,54 @@ window.toggleEdit = async id => {
     const solids = Array.isArray(data.solids) ? data.solids : [];
 
     row.innerHTML = `
-      <td><input name="date" type="date" value="${data.date || (els.date.value || '')}"/></td>
+      <td><input name="date" type="date" value="${data.date || today()}"/></td>
       <td><input name="time" type="time" value="${data.time || ''}"/></td>
-      <td><input name="formula" type="number" min="0" step="1" value="${Number(data.formula)||0}"/></td>
-      <td><input name="breastmilk" type="number" min="0" step="1" value="${Number(data.breastmilk)||0}"/></td>
-      <td><input name="poo" type="checkbox" ${isTrue(data.poo) ? 'checked' : ''}/></td>
-      <td><input name="pee" type="checkbox" ${isTrue(data.pee) ? 'checked' : ''}/></td>
+      <td><input name="formula" type="number" value="${data.formula||0}"/></td>
+      <td><input name="breastmilk" type="number" value="${data.breastmilk||0}"/></td>
+      <td><input name="poo" type="checkbox" ${isTrue(data.poo)?'checked':''}/></td>
+      <td><input name="pee" type="checkbox" ${isTrue(data.pee)?'checked':''}/></td>
       <td>
-        <label style="display:flex;align-items:center;gap:.4rem">
-          <input name="breastfeeding" type="checkbox" ${isTrue(data.breastfeeding) ? 'checked' : ''}/>
-          <span>Кърмене</span>
-        </label>
-        <input name="breastfeedingTime" type="number" min="0" step="1"
-               placeholder="мин" value="${data.breastfeedingTime ?? ''}"
-               style="width:7ch; margin-top:.25rem"/>
+        <input name="breastfeeding" type="checkbox" ${isTrue(data.breastfeeding)?'checked':''}/>
+        <input name="breastfeedingTime" type="number" value="${data.breastfeedingTime||''}" placeholder="мин"/>
       </td>
-      <td>${solidsEditorHTML(solids)}</td>
-      <td><textarea name="notes">${data.notes || ''}</textarea></td>
-      <td class="table__cell">
-        <button class="table__edit" onclick="toggleEdit('${id}')">💾</button>
-        <button class="table__delete" onclick="del('${id}')">🗑️</button>
+      <td>
+        ${(solids||[]).map(s=>`
+          <div class="solid-row js-solid-row">
+            <input name="solid_name" value="${s.name}" list="ingredients"/>
+            <input name="solid_grams" type="number" value="${s.grams}"/>
+            <button type="button" class="solid-row__remove" onclick="removeSolidRow(this)">✖</button>
+          </div>`).join('')}
+        <button type="button" class="btn--mini" onclick="addSolidRow(this)">+ съставка</button>
+        <datalist id="ingredients">
+          ${INGREDIENTS.map(x => `<option value="${x}">`).join('')}
+        </datalist>
       </td>
+      <td><textarea name="notes">${data.notes||''}</textarea></td>
+      <td class="table__cell"><button class="table__edit" onclick="toggleEdit('${id}')">💾</button>
+          <button class="table__delete" onclick="del('${id}')">🗑️</button></td>
     `;
   } else {
     const updated = {
-      date:                row.querySelector('input[name="date"]')?.value || '',
-      time:                row.querySelector('input[name="time"]')?.value || '',
-      formula:             parseInt(row.querySelector('input[name="formula"]')?.value, 10) || 0,
-      breastmilk:          parseInt(row.querySelector('input[name="breastmilk"]')?.value, 10) || 0,
-      poo:                 !!row.querySelector('input[name="poo"]')?.checked,
-      pee:                 !!row.querySelector('input[name="pee"]')?.checked,
-      breastfeeding:       !!row.querySelector('input[name="breastfeeding"]')?.checked,
-      breastfeedingTime:   (() => {
+      date: (row.querySelector('input[name="date"]')?.value || ''),
+      time: (row.querySelector('input[name="time"]')?.value || ''),
+      formula: parseInt(row.querySelector('input[name="formula"]')?.value,10)||0,
+      breastmilk: parseInt(row.querySelector('input[name="breastmilk"]')?.value,10)||0,
+      poo: !!row.querySelector('input[name="poo"]')?.checked,
+      pee: !!row.querySelector('input[name="pee"]')?.checked,
+      breastfeeding: !!row.querySelector('input[name="breastfeeding"]')?.checked,
+      breastfeedingTime: (() => {
         const v = row.querySelector('input[name="breastfeedingTime"]')?.value;
         return v === '' || v == null ? null : (parseInt(v, 10) || 0);
       })(),
-      notes:               row.querySelector('textarea[name="notes"]')?.value || ''
+      notes: (row.querySelector('textarea[name="notes"]')?.value || '')
     };
 
-    const solids = collectSolidsFromRow(row);
+    const solids = Array.from(row.querySelectorAll('.js-solid-row')).map(r => {
+      const name = r.querySelector('input[name="solid_name"]')?.value?.trim() || '';
+      const grams = parseInt(r.querySelector('input[name="solid_grams"]')?.value,10)||0;
+      return name && grams>0 ? { name, grams } : null;
+    }).filter(Boolean);
+
     updated.solids = solids;
     updated.solidsTotal = solids.reduce((a, s) => a + (Number(s.grams)||0), 0);
 
@@ -343,142 +265,131 @@ window.toggleEdit = async id => {
   }
 };
 
-/* ---------- Sleep ---------- */
-const toMinutes = t => { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h*60+m; };
-const minutesDiff = (start, end) => { const s=toMinutes(start), e=toMinutes(end); return e>s ? (e-s) : 0; };
-const fmtHM = mins => `${Math.floor(mins/60)}ч ${mins%60}м`;
-const validateSleep = (date, start, end) => {
-  if (!date) return 'Моля, избери дата.';
-  if (!start || !end) return 'Моля, попълни начало и край.';
-  if (toMinutes(end) <= toMinutes(start)) return 'Краят трябва да е след началото (същия ден).';
-  return null;
+window.addSolidRow = (btn) => {
+  const container = btn.closest('td');
+  container.insertAdjacentHTML('afterbegin', `
+    <div class="solid-row js-solid-row">
+      <input name="solid_name" list="ingredients" placeholder="съставка"/>
+      <input name="solid_grams" type="number" placeholder="г"/>
+      <button type="button" class="solid-row__remove" onclick="removeSolidRow(this)">✖</button>
+    </div>
+  `);
 };
-const sleepCell = (val, label) => `<td data-label="${label}">${val}</td>`;
-const sleepButtons = (id, edit) => `
-  <td class="table__cell">
-    <button class="table__edit" onclick="toggleSleepEdit('${id}')">${edit ? '💾' : '✏️'}</button>
-    <button class="table__delete" onclick="delSleep('${id}')">🗑️</button>
-  </td>`;
+
+window.removeSolidRow = (btn) => {
+  btn.closest('.js-solid-row')?.remove();
+};
+
+/* ---------- Sleep ---------- */
+const toMinutes = t => { if (!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+m; };
+const fmtHM = mins => `${Math.floor(mins/60)}ч ${mins%60}м`;
+const minutesDiff = (s,e)=>toMinutes(e)-toMinutes(s);
+
 const renderSleep = e => {
   const mins = minutesDiff(e.start, e.end);
-  const dur = mins > 0 ? fmtHM(mins) : '—';
   return `<tr>
-    ${sleepCell(e.date, 'Дата')}${sleepCell(e.start, 'Начало')}
-    ${sleepCell(e.end, 'Край')}${sleepCell(dur, 'Продължителност')}
-    ${sleepCell(e.notes || '', 'Забележки')}
-    ${sleepButtons(e.id, false)}
+    ${cell(e.date,'Дата')}${cell(e.start,'Начало')}${cell(e.end,'Край')}
+    ${cell(mins>0?fmtHM(mins):'—','Продължителност')}
+    ${cell(e.notes||'','Забележки')}
+    <td class="table__cell">
+      <button class="table__edit" onclick="toggleSleepEdit('${e.id}')">✏️</button>
+      <button class="table__delete" onclick="delSleep('${e.id}')">🗑️</button>
+    </td>
   </tr>`;
 };
-const clearSleep = () => { els.sleepTable.innerHTML=''; els.sleepSummary.innerHTML=''; };
+
+const clearSleep = () => {
+  els.sleepTable.innerHTML = '';
+  els.sleepSummary.innerHTML = '';
+};
+
 const updateSleepUI = list => {
   clearSleep();
-  const sorted = [...list].sort((a, b) => (b.start || '').localeCompare(a.start || ''));
+  const sorted = [...list].sort((a,b) => (b.start||'').localeCompare(a.start||''));
   els.sleepTable.innerHTML = sorted.map(renderSleep).join('');
-  const total = sorted.reduce((acc, e) => acc + minutesDiff(e.start, e.end), 0);
-  els.sleepSummary.innerHTML = `
-    <p>Брой сън сесии: <strong>${sorted.length}</strong></p>
-    <p>Общо сън за деня: <strong class="is-green">${fmtHM(total)}</strong></p>
-  `;
+  const total = sorted.reduce((a,e)=>a+Math.max(0,minutesDiff(e.start,e.end)),0);
+  els.sleepSummary.innerHTML = `<p>Общо сън: <strong>${fmtHM(total)}</strong></p>`;
 };
-window.delSleep = id => deleteSleep(uid, id);
+
+window.delSleep = id => deleteSleep(uid,id);
+
 window.toggleSleepEdit = async id => {
   const btn = event.target;
   const row = btn.closest('tr');
-  if (btn.textContent === '✏️') {
-    const data = await getSleepEntry(uid, id);
-    const inputs = [
-      `<td><input name="date" type="date" value="${data.date || (els.date.value || '')}"/></td>`,
-      `<td><input name="start" type="time" value="${data.start || ''}"/></td>`,
-      `<td><input name="end" type="time" value="${data.end || ''}"/></td>`,
-      `<td>${minutesDiff(data.start, data.end) > 0 ? fmtHM(minutesDiff(data.start, data.end)) : '—'}</td>`,
-      `<td><textarea name="notes">${data.notes || ''}</textarea></td>`
-    ].join('');
-    row.innerHTML = inputs + `
-      <td class="table__cell">
-        <button class="table__edit" onclick="toggleSleepEdit('${id}')">💾</button>
-        <button class="table__delete" onclick="delSleep('${id}')">🗑️</button>
-      </td>`;
+  if (btn.textContent==='✏️'){
+    const e=await getSleepEntry(uid,id);
+    row.innerHTML=`
+      <td><input name="date" type="date" value="${e.date||today()}"/></td>
+      <td><input name="start" type="time" value="${e.start||''}"/></td>
+      <td><input name="end" type="time" value="${e.end||''}"/></td>
+      <td>${(() => { const d=minutesDiff(e.start,e.end); return d>0?fmtHM(d):'—'; })()}</td>
+      <td><textarea name="notes">${e.notes||''}</textarea></td>
+      <td class="table__cell"><button class="table__edit" onclick="toggleSleepEdit('${id}')">💾</button>
+          <button class="table__delete" onclick="delSleep('${id}')">🗑️</button></td>`;
   } else {
-    const elements = Array.from(row.querySelectorAll('input,textarea'));
-    const updated = {
-      date:  elements[0].value,
-      start: elements[1].value,
-      end:   elements[2].value,
-      notes: elements[3].value
-    };
-    const err = validateSleep(updated.date, updated.start, updated.end);
-    if (err) { alert(err); return; }
-    await updateSleep(uid, id, updated);
+    const vals=Object.fromEntries([...row.querySelectorAll('input,textarea')].map(el=>[el.name,el.value]));
+    await updateSleep(uid,id,vals);
   }
 };
 
 /* ---------- Pump ---------- */
-const pumpCell = (val, label) => `<td data-label="${label}">${val}</td>`;
-const pumpButtons = (id, edit) => `
-  <td class="table__cell">
-    <button class="table__edit" onclick="togglePumpEdit('${id}')">${edit ? '💾' : '✏️'}</button>
-    <button class="table__delete" onclick="delPump('${id}')">🗑️</button>
-  </td>`;
 const renderPump = e => `
 <tr>
-  ${pumpCell(e.date,'Дата')}${pumpCell(e.time,'Час')}
-  ${pumpCell(Number(e.amount) || 0,'Количество (мл)')}
-  ${pumpCell(e.notes || '','Забележки')}
-  ${pumpButtons(e.id,false)}
+  ${cell(e.date,'Дата')}${cell(e.time,'Час')}
+  ${cell(e.amount||0,'Количество (мл)')}${cell(e.notes||'','Забележки')}
+  <td class="table__cell">
+    <button class="table__edit" onclick="togglePumpEdit('${e.id}')">✏️</button>
+    <button class="table__delete" onclick="delPump('${e.id}')">🗑️</button>
+  </td>
 </tr>`;
-const clearPump = () => { els.pumpTable.innerHTML=''; els.pumpSummary.innerHTML=''; };
+
+const clearPump = () => {
+  els.pumpTable.innerHTML = '';
+  els.pumpSummary.innerHTML = '';
+};
+
 const updatePumpUI = list => {
   clearPump();
-  const sorted = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+  const sorted = [...list].sort((a,b)=>(b.time||'').localeCompare(a.time||''));
   els.pumpTable.innerHTML = sorted.map(renderPump).join('');
-  const totalAmount = sorted.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
-  const sessions = sorted.filter(e => Number(e.amount) > 0).length;
-  els.pumpSummary.innerHTML = `
-    <p>Брой изцеждания: <strong>${sessions}</strong></p>
-    <p>Общо количество: <strong class="is-blue">${totalAmount} мл</strong></p>
-  `;
+  const total = sorted.reduce((a,e)=>a+(Number(e.amount)||0),0);
+  els.pumpSummary.innerHTML = `<p>Общо: <strong>${total} мл</strong></p>`;
 };
-window.delPump = id => deletePump(uid, id);
-window.togglePumpEdit = async id => {
-  const btn = event.target;
-  const row = btn.closest('tr');
-  if (btn.textContent === '✏️') {
-    const data = await getPumpEntry(uid, id);
-    const inputs = [
-      `<td><input name="date" type="date" value="${data.date || (els.date.value || '')}"/></td>`,
-      `<td><input name="time" type="time" value="${data.time || ''}"/></td>`,
-      `<td><input name="amount" type="number" min="0" step="1" value="${Number(data.amount)||0}"/></td>`,
-      `<td><textarea name="notes">${data.notes || ''}</textarea></td>`
-    ].join('');
-    row.innerHTML = inputs + `
-      <td class="table__cell">
-        <button class="table__edit" onclick="togglePumpEdit('${id}')">💾</button>
-        <button class="table__delete" onclick="delPump('${id}')">🗑️</button>
-      </td>`;
+
+window.delPump=id=>deletePump(uid,id);
+
+window.togglePumpEdit=async id=>{
+  const btn=event.target;
+  const row=btn.closest('tr');
+  if(btn.textContent==='✏️'){
+    const e=await getPumpEntry(uid,id);
+    row.innerHTML=`
+      <td><input name="date" type="date" value="${e.date||today()}"/></td>
+      <td><input name="time" type="time" value="${e.time||''}"/></td>
+      <td><input name="amount" type="number" min="0" step="1" value="${Number(e.amount)||0}"/></td>
+      <td><textarea name="notes">${e.notes||''}</textarea></td>
+      <td class="table__cell"><button class="table__edit" onclick="togglePumpEdit('${id}')">💾</button>
+          <button class="table__delete" onclick="delPump('${id}')">🗑️</button></td>`;
   } else {
-    const elements = Array.from(row.querySelectorAll('input,textarea'));
     const updated = {
-      date:   elements[0].value,
-      time:   elements[1].value,
-      amount: parseInt(elements[2].value, 10) || 0,
-      notes:  elements[3].value || ''
+      date:  row.querySelector('input[name="date"]').value,
+      time:  row.querySelector('input[name="time"]').value,
+      amount: parseInt(row.querySelector('input[name="amount"]').value,10)||0,
+      notes: row.querySelector('textarea[name="notes"]').value
     };
-    await updatePump(uid, id, updated);
+    await updatePump(uid,id,updated);
   }
 };
 
-/* ---------- Auth & events ---------- */
-els.login.addEventListener('click', async () => {
+/* ---------- Auth & Submit flows ---------- */
+els.login?.addEventListener('click', async () => {
   const email    = $('#email').value;
   const pwd      = $('#password').value;
   const remember = $('#rememberMe').checked;
-  try {
-    await login(email, pwd, remember);
-  } catch(err) {
-    alert(err.message);
-  }
+  try { await login(email, pwd, remember); }
+  catch(err) { alert(err.message); }
 });
-els.logout.addEventListener('click', () => logout());
+els.logout?.addEventListener('click', () => logout());
 
 // toggle на поле време за кърмене
 const bfCheckbox = $('#breastfeeding');
@@ -487,11 +398,10 @@ bfCheckbox?.addEventListener('change', () => {
   bfTimeBox.style.display = bfCheckbox.checked ? 'block' : 'none';
 });
 
-els.form.addEventListener('submit', async e => {
+els.form?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = new FormData(els.form);
 
-  // solids от hidden input (Puree UI)
   let solids = [];
   try { solids = JSON.parse(data.get('solidsJson') || '[]'); } catch(e){ solids = []; }
 
@@ -510,10 +420,12 @@ els.form.addEventListener('submit', async e => {
 
   await addEntry(uid, entry);
   els.form.reset();
+  pureeItems = [];
+  renderPureeList();
   bfTimeBox.style.display = 'none';
 });
 
-els.sleepForm.addEventListener('submit', async e => {
+els.sleepForm?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = new FormData(els.sleepForm);
   const entry = {
@@ -522,8 +434,9 @@ els.sleepForm.addEventListener('submit', async e => {
     end:   data.get('end'),
     notes: data.get('notes') || ''
   };
-  const err = validateSleep(entry.date, entry.start, entry.end);
-  if (err) { alert(err); return; }
+  // проста валидация
+  const toMin = t => { if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+m; };
+  if (toMin(entry.end) <= toMin(entry.start)) { alert('Краят трябва да е след началото (същия ден).'); return; }
   await addSleep(uid, entry);
   els.sleepForm.reset();
 });
@@ -536,13 +449,13 @@ els.pumpForm?.addEventListener('submit', async e => {
     time:   data.get('time'),
     amount: parseInt(data.get('amount'), 10) || 0,
     notes:  data.get('notes') || ''
-  };
+    };
   await addPump(uid, entry);
   els.pumpForm.reset();
 });
 
-// при смяна на дата – презареждаме и трите секции
-els.date.addEventListener('change', () => {
+/* ---------- Listen per date ---------- */
+els.date?.addEventListener('change', () => {
   if (!uid) return;
   unsubscribe && unsubscribe();
   sleepUnsub  && sleepUnsub();
@@ -553,6 +466,7 @@ els.date.addEventListener('change', () => {
   pumpUnsub   = listenPump(uid,    els.date.value, updatePumpUI);
 });
 
+/* ---------- Auth guard ---------- */
 onAuthStateChanged(auth, user => {
   if (user) {
     uid = user.uid;
