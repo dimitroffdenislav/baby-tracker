@@ -47,29 +47,63 @@
 
       <!-- FEEDING TAB -->
       <section id="feedingTab" class="tab is-active">
-        <form id="entryForm" class="form">
-          <div class="form__group">
-            <label>Час:<br /><input type="time" name="time" required class="form__input" /></label>
-          </div>
-          <div class="form__group">
-            <label>Адаптирано мляко (мл):<br /><input type="number" name="formula" class="form__input" /></label>
-          </div>
-          <div class="form__group">
-            <label>Кърма (мл):<br /><input type="number" name="breastmilk" class="form__input" /></label>
-          </div>
-          <div class="form__group form__group--checkboxes">
-            <label><input type="checkbox" name="poo" /> 💩 Акал</label>
-            <label><input type="checkbox" name="pee" /> 💧 Пишал</label>
-            <label><input type="checkbox" id="breastfeeding" name="breastfeeding" /> 💦 Кърмене</label>
-            <div id="breastfeedingTimeContainer" style="display:none;">
-              <label>Време на кърмене (мин):<br /><input type="number" name="breastfeedingTime" class="form__input" /></label>
-            </div>
-          </div>
-          <div class="form__group form__group--notes">
-            <label>Забележки:<br /><textarea name="notes" class="form__textarea"></textarea></label>
-          </div>
-          <button type="submit" class="form__button">Добави</button>
-        </form>
+      <form id="entryForm" class="form">
+  <div class="form__group">
+    <label>Час:<br />
+      <input type="time" name="time" required class="form__input" />
+    </label>
+  </div>
+
+  <div class="form__group">
+    <label>Адаптирано мляко (мл):<br />
+      <input type="number" name="formula" class="form__input" />
+    </label>
+  </div>
+
+  <div class="form__group">
+    <label>Кърма (мл):<br />
+      <input type="number" name="breastmilk" class="form__input" />
+    </label>
+  </div>
+
+  <div class="form__group form__group--checkboxes">
+    <label><input type="checkbox" name="poo" /> 💩 Акал</label>
+    <label><input type="checkbox" name="pee" /> 💧 Пишал</label>
+    <label><input type="checkbox" id="breastfeeding" name="breastfeeding" /> 💦 Кърмене</label>
+    <div id="breastfeedingTimeContainer" style="display:none;">
+      <label>Време на кърмене (мин):<br />
+        <input type="number" name="breastfeedingTime" class="form__input" />
+      </label>
+    </div>
+  </div>
+
+  <div class="form__group">
+    <label>Пюре – съставка<br />
+      <input id="pureeName" list="ingredients" placeholder="напр. тиквичка" class="form__input" />
+    </label>
+    <datalist id="ingredients"><!-- запълва се от JS --></datalist>
+  </div>
+
+  <div class="form__group">
+    <label>Количество (г)<br />
+      <input id="pureeQty" type="number" min="0" step="5" placeholder="грамове" class="form__input" />
+    </label>
+    <button type="button" id="addPuree" class="form__button" style="padding:12px 18px;margin-top:10px;">
+      Добави съставка
+    </button>
+    <ul id="pureeList" class="puree__list" style="margin-top:10px;"></ul>
+    <input type="hidden" name="solidsJson" id="solidsJson" />
+  </div>
+
+  <div class="form__group form__group--notes">
+    <label>Забележки:<br />
+      <textarea name="notes" class="form__textarea"></textarea>
+    </label>
+  </div>
+
+  <button type="submit" class="form__button">Добави</button>
+</form>
+
 
         <div class="table-wrapper">
           <table class="table">
