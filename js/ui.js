@@ -17,6 +17,56 @@ const buttons = (id, edit) => `
     <button class="table__delete" onclick="del('${id}')">🗑️</button>
   </td>`;
 
+/* ---------- INGREDIENTS: чести зеленчуци/плодове/меса/риба ---------- */
+const INGREDIENTS = [
+  // Зеленчуци – кореноплоди, тиквени, листни, кръстоцветни, лукови
+  'морков','тиква','картоф','сладък картоф','пащърнак','целина (корен)','целина (стъбла)',
+  'ряпа','колраби','червено цвекло','топинамбур',
+  'тиквичка','краставица','зелен боб','зелен грах','царевица','карфиол','броколи','брюкселско зеле',
+  'бяло зеле','киселo зеле','коприва','спанак','манголд','лапад',
+  'домaт','чушка (сладка)','патладжан','праз','лук','чесън','гъби (култивирани, печурка)',
+  // Плодове – семкови, костилкови, ягодоплодни, тропични, други местни
+  'ябълка','круша','дюля','райска ябълка',
+  'банан','киви','смокиня','грозде (бяло)','грозде (червено)','диня','пъпеш',
+  'праскова','кайсия','слива','череша','вишна','мирула/мушмула',
+  'ягода','боровинка','малина','къпина','касис','цариградско грозде',
+  // Зърнени/каши и псевдозърна
+  'ориз','оризова каша','овесени ядки','овесена каша','ечемик','пшеница (грис)','булгур','кус-кус',
+  'просо','елда','киноа','амарант','царевично брашно/полента',
+  // Бобови
+  'червена леща','кафява леща','нахут','бял боб','бакла',
+  // Млечни/яйчни (според възраст и толеранс)
+  'кисело мляко','кефир','извара','рикота','сирене (обезсолено)','маскарпоне',
+  'яйчен жълтък','цяло яйце (разбито, термично обработено)',
+  // Ядкови пасти/семена (гладки пасти за алергенно въвеждане)
+  'тахан (сусамов)','фъстъчено масло (гладко)','бадемово масло (гладко)',
+  'ленено семе (смляно)','чия (накисната)',
+  // Мазнини за обогатяване
+  'зехтин','масло','гхи','студенопресовано слънчогледово олио','рапично олио',
+  // Меса – местни и често ползвани
+  'пилешко','пуешко','заешко','телешко','агнешко','свинско (постно)',
+  'черен дроб (пилешки/телешки)',
+  // Риба и морски
+  'сьомга','пъстърва','бяла риба','хек','треска','скумрия','сардина','тон','карагьоз','шаран',
+  // Други добавки/вкусове (по малко)
+  'копър','магданоз','мащерка','риган','ванилия (натурална)',
+  // Напитки/добавки към пюрета
+  'костен бульон (безсолен)','ябълков пектин','плодово пюре (без захар)'
+];
+
+
+// Състояние за текущото пюре преди submit
+let pureeItems = []; // [{ name:'морков', grams:40 }, ...]
+
+// Helpers за пюре
+const formatPureeCell = solidsArr => {
+  if (!Array.isArray(solidsArr) || !solidsArr.length) return '—';
+  return solidsArr.map(s => `${s.name} ${Number(s.grams)||0}г`).join(' + ');
+};
+const pureeTotalGrams = solidsArr =>
+  (Array.isArray(solidsArr) ? solidsArr.reduce((a, s) => a + (Number(s.grams)||0), 0) : 0);
+
+/* ============ Elements ============ */
 const els = {
   auth:   $('#authSection'),
   app:    $('#appSection'),
@@ -28,7 +78,7 @@ const els = {
   sleepForm:    $('#sleepForm'),
   sleepTable:   $('#sleepTable'),
   sleepSummary: $('#sleepSummary'),
-  // Pumps (Изцеждане)
+  // Pumps
   pumpForm:    $('#pumpForm'),
   pumpTable:   $('#pumpTable'),
   pumpSummary: $('#pumpSummary'),
@@ -56,13 +106,82 @@ els.tabBtns.forEach(btn => {
   });
 });
 
+/* --------- Puree UI (инжектира се в края на #entryForm) --------- */
+function createPureeUI() {
+  if (!els.form) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'puree';
+  wrapper.innerHTML = `
+    <div class="puree__row">
+      <label>Пюре – съставка</label>
+      <input id="pureeName" list="ingredients" placeholder="напр. морков" />
+      <datalist id="ingredients">
+        ${INGREDIENTS.map(x => `<option value="${x}">`).join('')}
+      </datalist>
+      <label>Количество (г)</label>
+      <input id="pureeQty" type="number" min="0" step="5" placeholder="грамове" />
+      <button type="button" id="addPuree">Добави</button>
+    </div>
+    <ul id="pureeList" class="puree__list"></ul>
+    <input type="hidden" name="solidsJson" id="solidsJson" />
+  `;
+  els.form.appendChild(wrapper);
+
+  const $name = wrapper.querySelector('#pureeName');
+  const $qty  = wrapper.querySelector('#pureeQty');
+  const $list = wrapper.querySelector('#pureeList');
+  const $hid  = wrapper.querySelector('#solidsJson');
+
+  const rerender = () => {
+    $list.innerHTML = pureeItems.length
+      ? pureeItems.map((it, i) =>
+          `<li>
+             <span>${it.name} — <strong>${it.grams}г</strong></span>
+             <button type="button" data-i="${i}" class="puree__remove">✖</button>
+           </li>`).join('')
+      : '<li class="is-muted">Няма добавени съставки</li>';
+    $hid.value = JSON.stringify(pureeItems);
+  };
+
+  wrapper.addEventListener('click', e => {
+    const btn = e.target.closest('.puree__remove');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    if (!Number.isNaN(i)) {
+      pureeItems.splice(i, 1);
+      rerender();
+    }
+  });
+
+  wrapper.querySelector('#addPuree').addEventListener('click', () => {
+    const name = ($name.value || '').trim();
+    const grams = parseInt($qty.value, 10) || 0;
+    if (!name || grams <= 0) return;
+    pureeItems.push({ name, grams });
+    $name.value = '';
+    $qty.value = '';
+    rerender();
+  });
+
+  els.form.addEventListener('reset', () => {
+    pureeItems = [];
+    rerender();
+  });
+
+  rerender();
+}
+createPureeUI();
+
 /* ============ Feeding render ============ */
 const render = e => `
 <tr>
   ${cell(e.date,'Дата')}${cell(e.time,'Час')}
   ${cell(e.formula||0,'Адаптирано')}${cell(e.breastmilk||0,'Кърма')}
   ${cell(isTrue(e.poo)?'✅':'❌','Акал')}${cell(isTrue(e.pee)?'✅':'❌','Пишал')}
-  ${cell(isTrue(e.breastfeeding)?'✅':'❌','Кърмене')}${cell(e.notes||'','Забележки')}
+  ${cell(isTrue(e.breastfeeding)?`✅${e.breastfeedingTime?` (${e.breastfeedingTime}м)`:''}`:'❌','Кърмене')}
+  ${cell(formatPureeCell(e.solids),'Пюре')}
+  ${cell(e.notes||'','Забележки')}
   ${buttons(e.id,false)}
 </tr>`;
 
@@ -92,9 +211,28 @@ const updateUI = list => {
     breastmilkMeals: sorted.filter(e => Number(e.breastmilk) > 0).length,
     breastfeedingEvents: sorted.filter(e => isTrue(e.breastfeeding)).length,
     totalMeals: sorted.filter(e =>
-      Number(e.formula) > 0 || Number(e.breastmilk) > 0 || isTrue(e.breastfeeding)
+      Number(e.formula) > 0 || Number(e.breastmilk) > 0 || isTrue(e.breastfeeding) || (e.solids && e.solids.length)
     ).length
   };
+
+  // Пюрета: тотал и разбивка
+  let solidsTotal = 0;
+  const solidsByItem = {};
+  sorted.forEach(e => {
+    (e.solids || []).forEach(s => {
+      const g = Number(s.grams) || 0;
+      solidsTotal += g;
+      solidsByItem[s.name] = (solidsByItem[s.name] || 0) + g;
+    });
+  });
+  const solidsTable = Object.keys(solidsByItem).length
+    ? `<table class="mini">
+         <thead><tr><th>Съставка</th><th>Общо (г)</th></tr></thead>
+         <tbody>
+           ${Object.entries(solidsByItem).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+         </tbody>
+       </table>`
+    : '<p class="is-muted">Няма пюрета за тази дата.</p>';
 
   els.summary.innerHTML = `
     <p>Общо хранения: <strong class="is-red">${feedCounts.totalMeals}</strong></p>
@@ -104,6 +242,9 @@ const updateUI = list => {
     <p>Акал: <strong>${counts.poo}</strong></p>
     <p>Пишал: <strong>${counts.pee}</strong></p>
     <p>Кърмене: <strong>${counts.breastfeeding}</strong></p>
+    <hr/>
+    <p>Пюре общо за деня: <strong>${solidsTotal} г</strong></p>
+    ${solidsTable}
   `;
 };
 
@@ -116,6 +257,11 @@ window.toggleEdit = async id => {
 
   if (btn.textContent === '✏️') {
     const data = await getEntry(uid, id);
+
+    // запази solids в dataset, за да не ги губим при save
+    row.dataset.solids = JSON.stringify(data.solids || []);
+    row.dataset.solidsTotal = String(data.solidsTotal || pureeTotalGrams(data.solids||[]));
+
     const inputs = ['date','time','formula','breastmilk']
       .map(f => `<td><input name="${f}" value="${data[f] || ''}"/></td>`).join('') +
       ['poo','pee','breastfeeding']
@@ -128,6 +274,12 @@ window.toggleEdit = async id => {
       </td>`;
   } else {
     const elements = Array.from(row.querySelectorAll('input,textarea'));
+
+    // възстанови solids
+    let keepSolids = [];
+    try { keepSolids = JSON.parse(row.dataset.solids || '[]'); } catch(e){ keepSolids = []; }
+    const keepSolidsTotal = keepSolids.length ? (Number(row.dataset.solidsTotal)||pureeTotalGrams(keepSolids)) : 0;
+
     const updated = {
       date:          elements[0].value,
       time:          elements[1].value,
@@ -136,7 +288,8 @@ window.toggleEdit = async id => {
       poo:           elements[4].checked,
       pee:           elements[5].checked,
       breastfeeding: elements[6].checked,
-      notes:         elements[7].value
+      notes:         elements[7].value,
+      ...(keepSolids.length ? { solids: keepSolids, solidsTotal: keepSolidsTotal } : {})
     };
     await updateEntry(uid, id, updated);
   }
@@ -224,7 +377,7 @@ window.toggleSleepEdit = async id => {
       date:  elements[0].value,
       start: elements[1].value,
       end:   elements[2].value,
-      notes: elements[3].value   // ← фикса
+      notes: elements[3].value
     };
     const err = validateSleep(updated.date, updated.start, updated.end);
     if (err) {
@@ -258,7 +411,6 @@ const clearPump = () => {
 
 const updatePumpUI = list => {
   clearPump();
-  // най-новото най-отгоре
   const sorted = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
   els.pumpTable.innerHTML = sorted.map(renderPump).join('');
 
@@ -316,21 +468,37 @@ els.login.addEventListener('click', async () => {
 
 els.logout.addEventListener('click', () => logout());
 
+// Показване на поле "време на кърмене" само ако е чекнато
+const bfCheckbox = $('#breastfeeding');
+const bfTimeBox  = $('#breastfeedingTimeContainer');
+bfCheckbox?.addEventListener('change', () => {
+  bfTimeBox.style.display = bfCheckbox.checked ? 'block' : 'none';
+});
+
 els.form.addEventListener('submit', async e => {
   e.preventDefault();
   const data = new FormData(els.form);
+
+  // solids от hidden input
+  let solids = [];
+  try { solids = JSON.parse(data.get('solidsJson') || '[]'); } catch(e){ solids = []; }
+
   const entry = {
-    date:         els.date.value || today(),
-    time:         data.get('time'),
-    formula:      parseInt(data.get('formula'), 10)    || 0,
-    breastmilk:   parseInt(data.get('breastmilk'), 10) || 0,
-    poo:          data.get('poo')           === 'on',
-    pee:          data.get('pee')           === 'on',
-    breastfeeding:data.get('breastfeeding') === 'on',
-    notes:        data.get('notes')         || ''
+    date:           els.date.value || today(),
+    time:           data.get('time'),
+    formula:        parseInt(data.get('formula'), 10)    || 0,
+    breastmilk:     parseInt(data.get('breastmilk'), 10) || 0,
+    poo:            data.get('poo')           === 'on',
+    pee:            data.get('pee')           === 'on',
+    breastfeeding:  data.get('breastfeeding') === 'on',
+    breastfeedingTime: parseInt(data.get('breastfeedingTime'), 10) || null,
+    notes:          data.get('notes')         || '',
+    ...(solids.length ? { solids, solidsTotal: pureeTotalGrams(solids) } : {})
   };
+
   await addEntry(uid, entry);
   els.form.reset();
+  bfTimeBox.style.display = 'none';
 });
 
 els.sleepForm.addEventListener('submit', async e => {
@@ -395,9 +563,13 @@ onAuthStateChanged(auth, user => {
     els.app.hidden  = true;
     els.auth.hidden = false;
 
-    clear();
-    clearSleep();
-    clearPump();
+    // clear UI
+    els.table.innerHTML = '';
+    els.summary.innerHTML = '';
+    els.sleepTable.innerHTML = '';
+    els.sleepSummary.innerHTML = '';
+    els.pumpTable.innerHTML = '';
+    els.pumpSummary.innerHTML = '';
 
     unsubscribe = null;
     sleepUnsub  = null;
