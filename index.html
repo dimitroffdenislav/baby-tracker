@@ -35,7 +35,6 @@
       <div class="tabs">
         <button class="tab-btn is-active" data-tab="feedingTab">Хранене</button>
         <button class="tab-btn" data-tab="sleepTab">Сън</button>
-        <!-- Нов таб -->
         <button class="tab-btn" data-tab="pumpTab">Изцеждане</button>
       </div>
 
@@ -83,6 +82,7 @@
                 <th class="table__header">Акал</th>
                 <th class="table__header">Пишал</th>
                 <th class="table__header">Кърмене</th>
+                <th class="table__header">Пюре</th><!-- ⇦ добавено -->
                 <th class="table__header">Забележки</th>
                 <th class="table__header">Действия</th>
               </tr>
@@ -128,7 +128,7 @@
         <div id="sleepSummary" class="summary"></div>
       </section>
 
-      <!-- PUMP TAB (нов) -->
+      <!-- PUMP TAB -->
       <section id="pumpTab" class="tab">
         <form id="pumpForm" class="form">
           <div class="form__group">
@@ -175,7 +175,6 @@
     }
   </script>
 
-  <!-- Важно: пътят да съвпада със структурата ти -->
-  <script type="module" src="/baby-tracker/js/app.js?v=4"></script>
+  <script type="module" src="/baby-tracker/js/app.js?v=5"></script>
 </body>
 </html>
