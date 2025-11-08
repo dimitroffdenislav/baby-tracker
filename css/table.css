@@ -98,3 +98,9 @@ table.mini th {
     gap: 8px;
     text-transform: capitalize;
 }
+
+.summary__foods {
+    background: #f8f8f8;
+    padding: 3vw;
+    border-radius: 1vw;
+}
