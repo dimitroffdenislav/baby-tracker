@@ -241,10 +241,10 @@ const updateUI = list => {
       if (!name) return;
       const g = Number(s.grams) || 0;
       solidsTotal += g;
-      // за дневната таблица пазим оригиналното име (може да е комбинация)
+      // дневна агрегация – пазим оригиналното име
       solidsByItem[name] = (solidsByItem[name] || 0) + g;
 
-      // но за lifetime записваме само отделните продукти
+      // lifetime – само отделни продукти
       const parts = extractIngredients(name);
       parts.forEach(p => {
         if (!lifetimeSolids[p]) {
@@ -298,14 +298,16 @@ const updateUI = list => {
     <p>Витамин D: <strong>${vitaminGiven ? 'ДА' : 'НЕ'}</strong></p>
     <hr/>
     <p>Пюре общо за деня: <strong>${solidsTotal} г</strong></p>
+    <p>Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
+    ${solidsTable}
+    <hr/>
     <div class="summary__foods">
       <p>Храни до момента (пюрета, общо):</p>
       ${lifetimeHtml}
     </div>
-    <p>Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
-    ${solidsTable}
   `;
 };
+
 
 window.del = id => deleteEntry(uid, id);
 
