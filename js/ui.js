@@ -310,11 +310,11 @@ const updateUI = list => {
     <p>Пишал: <strong>${counts.pee}</strong></p>
     <p>Кърмене: <strong>${counts.breastfeeding}</strong></p>
     <p>Витамин D: <strong>${vitaminGiven ? 'ДА' : 'НЕ'}</strong></p>
-    <hr/>
+    
     <p>Пюре общо за деня: <strong>${solidsTotal} г</strong></p>
     <p>Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
     ${solidsTable}
-    <hr/>
+    
     <div class="summary__foods">
       <p>Храни до момента (пюрета, общо):</p>
       ${lifetimeHtml}
