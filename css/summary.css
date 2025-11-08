@@ -20,5 +20,14 @@
     border-radius: 8px;
 }
 
+.summary .all-food {
+        background: #11c900;
+    color: #fff;
+}
+
+.summary .all-food strong {
+    background-color: #256603;
+}
+
 .summary strong.is-red {
     background-color: #F14EFF;
