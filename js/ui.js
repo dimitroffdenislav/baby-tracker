@@ -1,7 +1,8 @@
 import {
   addEntry, deleteEntry, updateEntry, listenEntries, getEntry,
   addSleep, deleteSleep, updateSleep, listenSleep, getSleepEntry,
-  addPump, deletePump, updatePump, listenPump, getPumpEntry
+  addPump, deletePump, updatePump, listenPump, getPumpEntry,
+  getAllEntries // НОВО: трябва да го има в db.js
 } from './db.js';
 import { login, logout } from './auth.js';
 import { auth } from './firebaseConfig.js';
@@ -39,7 +40,7 @@ const INGREDIENTS = [
 
 let pureeItems = [];
 
-/* ---------- Lifetime solids (уникални пюрета за „целия живот“) ---------- */
+/* ---------- Lifetime solids (уникални пюрета за целия период) ---------- */
 const LIFETIME_SOLIDS_KEY = 'bt_lifetimeSolids';
 let lifetimeSolids = {};
 try {
@@ -59,6 +60,26 @@ const saveLifetimeSolids = () => {
     localStorage.setItem(LIFETIME_SOLIDS_KEY, JSON.stringify(lifetimeSolids));
   } catch (e) {
     // ignore
+  }
+};
+
+// чете всички хранения от Firestore и построява lifetimeSolids от НУЛА
+const rebuildLifetimeSolidsFromHistory = async (uid) => {
+  try {
+    const allEntries = await getAllEntries(uid);
+    const map = {};
+    allEntries.forEach(e => {
+      (e.solids || []).forEach(s => {
+        const name = s && s.name;
+        if (name) {
+          map[name] = true;
+        }
+      });
+    });
+    lifetimeSolids = map;
+    saveLifetimeSolids();
+  } catch (err) {
+    console.error('Грешка при зареждане на старите храни:', err);
   }
 };
 
@@ -210,7 +231,7 @@ const updateUI = list => {
       solidsTotal += g;
       solidsByItem[name] = (solidsByItem[name] || 0) + g;
 
-      // lifetime set – ако поне веднъж е ял, остава завинаги
+      // lifetime set – добавяме нови храни, ако се появят
       if (!lifetimeSolids[name]) {
         lifetimeSolids[name] = true;
       }
@@ -516,6 +537,7 @@ els.form?.addEventListener('submit', async e => {
   }
 });
 
+/* ---------- Sleep submit ---------- */
 els.sleepForm?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = new FormData(els.sleepForm);
@@ -531,6 +553,7 @@ els.sleepForm?.addEventListener('submit', async e => {
   els.sleepForm.reset();
 });
 
+/* ---------- Pump submit ---------- */
 els.pumpForm?.addEventListener('submit', async e => {
   e.preventDefault();
   const data = new FormData(els.pumpForm);
@@ -545,16 +568,19 @@ els.pumpForm?.addEventListener('submit', async e => {
 });
 
 /* ---------- Listen per date ---------- */
-els.date?.addEventListener('change', () => {
-  if (!uid) return;
+const subscribeForCurrentDate = () => {
+  if (!uid || !els.date) return;
   unsubscribe && unsubscribe();
   sleepUnsub  && sleepUnsub();
   pumpUnsub   && pumpUnsub();
 
-  unsubscribe = listenEntries(uid, els.date.value, updateUI);
-  sleepUnsub  = listenSleep(uid,   els.date.value, updateSleepUI);
-  pumpUnsub   = listenPump(uid,    els.date.value, updatePumpUI);
-});
+  const d = els.date.value || today();
+  unsubscribe = listenEntries(uid, d, updateUI);
+  sleepUnsub  = listenSleep(uid,   d, updateSleepUI);
+  pumpUnsub   = listenPump(uid,    d, updatePumpUI);
+};
+
+els.date?.addEventListener('change', subscribeForCurrentDate);
 
 /* ---------- Auth guard ---------- */
 onAuthStateChanged(auth, user => {
@@ -564,13 +590,13 @@ onAuthStateChanged(auth, user => {
     els.app.hidden  = false;
     els.date.value  = today();
 
-    unsubscribe && unsubscribe();
-    sleepUnsub  && sleepUnsub();
-    pumpUnsub   && pumpUnsub();
+    // първо зареждаме всички стари храни от Firestore,
+    // после се закачаме за текущата дата
+    rebuildLifetimeSolidsFromHistory(uid)
+      .finally(() => {
+        subscribeForCurrentDate();
+      });
 
-    unsubscribe = listenEntries(uid, els.date.value, updateUI);
-    sleepUnsub  = listenSleep(uid,   els.date.value, updateSleepUI);
-    pumpUnsub   = listenPump(uid,    els.date.value, updatePumpUI);
   } else {
     uid = null;
     els.app.hidden  = true;
