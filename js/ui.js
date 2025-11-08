@@ -256,7 +256,21 @@ const updateUI = list => {
 
   saveLifetimeSolids();
 
-  const lifetimeList = Object.keys(lifetimeSolids).sort();
+    // lifetime списък без дубликати поради главни/малки букви
+  const lifetimeList = (() => {
+    const byNorm = {};
+    Object.keys(lifetimeSolids).forEach(name => {
+      if (!name) return;
+      const norm = name.trim().toLocaleLowerCase('bg-BG');
+      if (!norm) return;
+      // ако вече имаме нещо със същия norm, не го добавяме втори път
+      if (!byNorm[norm]) {
+        byNorm[norm] = name.trim();
+      }
+    });
+    return Object.values(byNorm).sort((a, b) => a.localeCompare(b, 'bg-BG'));
+  })();
+
 
   const lifetimeHtml = lifetimeList.length
     ? `<ul class="summary-foods">
