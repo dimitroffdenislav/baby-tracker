@@ -312,7 +312,7 @@ const updateUI = list => {
     <p>Витамин D: <strong>${vitaminGiven ? 'ДА' : 'НЕ'}</strong></p>
     
     <p>Пюре общо за деня: <strong>${solidsTotal} г</strong></p>
-    <p>Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
+    <p class="all-food">Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
     ${solidsTable}
     
     <div class="summary__foods">
