@@ -1,8 +1,5 @@
 .table-wrapper {
     margin-top: 50px;
-    overflow: hidden;
-    max-height: 307px;
-    overflow: auto;
     border: 1px solid #c8c8c8;
     border-radius: 20px;
     margin-bottom: 20px;
@@ -11,6 +8,7 @@
 .table {
     min-width: 1200px;
     margin: 0;
+    table-layout: fixed;
 }
 
 .table th {
@@ -53,9 +51,9 @@
     appearance: none;
     border: none;
     align-items: center;
-    margin-right: 10px;
-    font-size: 24px;
-    padding: 8px 16px 5px;
+    margin-right: 3px;
+    font-size: 15px;
+    padding: 7px 10px;
     border-radius: 8px;
 }
 
@@ -103,4 +101,11 @@ table.mini th {
     background: #f8f8f8;
     padding: 3vw;
     border-radius: 1vw;
+    margin-top: 5vw;
+}
+
+@media screen and (max-width: 767px) {
+    .table th {
+        padding: 12px;
+    }
 }
