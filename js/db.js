@@ -1,7 +1,7 @@
 // js/db.js
 import {
   collection, addDoc, deleteDoc, doc, updateDoc,
-  serverTimestamp, query, where, onSnapshot, getDoc
+  serverTimestamp, query, where, onSnapshot, getDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
 
@@ -140,4 +140,10 @@ export const listenPump = (userId, date, cb) => {
     },
     'pumps'
   );
+};
+
+export const getAllEntries = async (uid) => {
+  const q = query(collection(db, 'users', uid, 'entries'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
