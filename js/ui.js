@@ -2,7 +2,7 @@ import {
   addEntry, deleteEntry, updateEntry, listenEntries, getEntry,
   addSleep, deleteSleep, updateSleep, listenSleep, getSleepEntry,
   addPump, deletePump, updatePump, listenPump, getPumpEntry,
-  getAllEntries // НОВО: трябва да го има в db.js
+  getAllEntries // НОВО от db.js
 } from './db.js';
 import { login, logout } from './auth.js';
 import { auth } from './firebaseConfig.js';
@@ -63,6 +63,18 @@ const saveLifetimeSolids = () => {
   }
 };
 
+/**
+ * Взима име като "Грах + Тиквичка + броколи"
+ * и връща ['Грах','Тиквичка','броколи'] – ползваме за lifetime списъка.
+ */
+const extractIngredients = (rawName) => {
+  if (!rawName) return [];
+  return rawName
+    .split(/[+,]/)          // делим по + и запетая
+    .map(s => s.trim())
+    .filter(Boolean);
+};
+
 // чете всички хранения от Firestore и построява lifetimeSolids от НУЛА
 const rebuildLifetimeSolidsFromHistory = async (uid) => {
   try {
@@ -70,10 +82,10 @@ const rebuildLifetimeSolidsFromHistory = async (uid) => {
     const map = {};
     allEntries.forEach(e => {
       (e.solids || []).forEach(s => {
-        const name = s && s.name;
-        if (name) {
-          map[name] = true;
-        }
+        const parts = extractIngredients(s && s.name);
+        parts.forEach(p => {
+          map[p] = true;
+        });
       });
     });
     lifetimeSolids = map;
@@ -229,19 +241,28 @@ const updateUI = list => {
       if (!name) return;
       const g = Number(s.grams) || 0;
       solidsTotal += g;
+      // за дневната таблица пазим оригиналното име (може да е комбинация)
       solidsByItem[name] = (solidsByItem[name] || 0) + g;
 
-      // lifetime set – добавяме нови храни, ако се появят
-      if (!lifetimeSolids[name]) {
-        lifetimeSolids[name] = true;
-      }
+      // но за lifetime записваме само отделните продукти
+      const parts = extractIngredients(name);
+      parts.forEach(p => {
+        if (!lifetimeSolids[p]) {
+          lifetimeSolids[p] = true;
+        }
+      });
     });
   });
 
   saveLifetimeSolids();
 
   const lifetimeList = Object.keys(lifetimeSolids).sort();
-  const solidsUniqueStr = lifetimeList.length ? lifetimeList.join(', ') : '—';
+
+  const lifetimeHtml = lifetimeList.length
+    ? `<ul class="summary-foods">
+         ${lifetimeList.map(name => `<li><em>${name}</em></li>`).join('')}
+       </ul>`
+    : '<p class="is-muted">Няма въведени храни.</p>';
 
   const solidsTable = Object.keys(solidsByItem).length
     ? `<table class="mini"><thead><tr><th>Съставка</th><th>Общо (г)</th></tr></thead><tbody>
@@ -277,7 +298,10 @@ const updateUI = list => {
     <p>Витамин D: <strong>${vitaminGiven ? 'ДА' : 'НЕ'}</strong></p>
     <hr/>
     <p>Пюре общо за деня: <strong>${solidsTotal} г</strong></p>
-    <p>Храни до момента (пюрета, общо): <strong>${solidsUniqueStr}</strong></p>
+    <div class="summary__foods">
+      <p>Храни до момента (пюрета, общо):</p>
+      ${lifetimeHtml}
+    </div>
     <p>Общо количество храна (мляко + пюре): <strong>${totalAll}</strong></p>
     ${solidsTable}
   `;
@@ -347,11 +371,17 @@ window.toggleEdit = async id => {
     updated.solids = solids;
     updated.solidsTotal = solids.reduce((a, s) => a + (Number(s.grams)||0), 0);
 
-    // update lifetime solids локално
+    // update lifetime solids локално – пак само отделните продукти, не комбинацията
+    const seenParts = new Set();
     solids.forEach(s => {
-      if (s.name && !lifetimeSolids[s.name]) {
-        lifetimeSolids[s.name] = true;
-      }
+      extractIngredients(s.name).forEach(p => {
+        if (!seenParts.has(p)) {
+          seenParts.add(p);
+          if (!lifetimeSolids[p]) {
+            lifetimeSolids[p] = true;
+          }
+        }
+      });
     });
     saveLifetimeSolids();
 
@@ -516,15 +546,17 @@ els.form?.addEventListener('submit', async e => {
     ...(solids.length ? { solids, solidsTotal: pureeTotalGrams(solids) } : { solids: [], solidsTotal: 0 })
   };
 
-  // обновяваме lifetime solids
-  const seenNames = new Set();
+  // обновяваме lifetime solids – само отделни продукти
+  const seenParts = new Set();
   solids.forEach(s => {
-    if (s.name && !seenNames.has(s.name)) {
-      seenNames.add(s.name);
-      if (!lifetimeSolids[s.name]) {
-        lifetimeSolids[s.name] = true;
+    extractIngredients(s.name).forEach(p => {
+      if (!seenParts.has(p)) {
+        seenParts.add(p);
+        if (!lifetimeSolids[p]) {
+          lifetimeSolids[p] = true;
+        }
       }
-    }
+    });
   });
   saveLifetimeSolids();
 
