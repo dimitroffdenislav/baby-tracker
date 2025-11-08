@@ -91,9 +91,10 @@ table.mini th {
 } 
 
 .summary-foods {
+    padding-top: 10px;
     padding-left: 30px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
     text-transform: capitalize;
 }
