@@ -15,7 +15,7 @@
 }
 
 .tabs {
-    dispaly: flex;
+    display: flex;
     gap: 10px;
 }
 
@@ -33,11 +33,16 @@
     text-decoration: none;
     background-color: #417FC8;
     border-radius: 10px;
-    margin: 20px auto 0;
     color: #fff;
     border: none;
 }
 
 .tab-btn.is-active {
     background-color: #f44336;
+}
+
+@media screen and (max-width: 767px) {
+    .tab-btn {
+        padding: 15px 30px;
+    }
 }
