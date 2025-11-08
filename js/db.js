@@ -1,7 +1,16 @@
 // js/db.js
 import {
-  collection, addDoc, deleteDoc, doc, updateDoc,
-  serverTimestamp, query, where, onSnapshot, getDoc, getDocs
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  query,
+  where,
+  onSnapshot,
+  getDoc,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
 
@@ -142,8 +151,10 @@ export const listenPump = (userId, date, cb) => {
   );
 };
 
-export const getAllEntries = async (uid) => {
-  const q = query(collection(db, 'users', uid, 'entries'));
+/* ========= ВСИЧКИ ХРАНЕНИЯ ЗА ПОТРЕБИТЕЛ (за lifetime списъка) ========= */
+export const getAllEntries = async (userId) => {
+  // същата структура като addEntry/listenEntries, само без where('date','==', ...)
+  const q = query(collection(db, 'babyData', userId, 'entries'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
