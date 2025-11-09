@@ -80,20 +80,26 @@ const rebuildLifetimeSolidsFromHistory = async (uid) => {
   try {
     const allEntries = await getAllEntries(uid);
     const map = {};
+
     allEntries.forEach(e => {
       (e.solids || []).forEach(s => {
         const parts = extractIngredients(s && s.name);
         parts.forEach(p => {
-          map[p] = true;
+          const key = p && p.trim();
+          if (!key) return;
+          // броим колко ПЪТИ е срещната тази съставка
+          map[key] = (map[key] || 0) + 1;
         });
       });
     });
-    lifetimeSolids = map;
+
+    lifetimeSolids = map;    // вече е { 'Броколи': 10, 'Грах': 5, ... }
     saveLifetimeSolids();
   } catch (err) {
     console.error('Грешка при зареждане на старите храни:', err);
   }
 };
+
 
 /* ---------- Elements ---------- */
 const els = {
@@ -243,38 +249,38 @@ const updateUI = list => {
       solidsTotal += g;
       // дневна агрегация – пазим оригиналното име
       solidsByItem[name] = (solidsByItem[name] || 0) + g;
-
-      // lifetime – само отделни продукти
-      const parts = extractIngredients(name);
-      parts.forEach(p => {
-        if (!lifetimeSolids[p]) {
-          lifetimeSolids[p] = true;
-        }
-      });
     });
   });
 
-  saveLifetimeSolids();
-
-    // lifetime списък без дубликати поради главни/малки букви
+  // lifetime списък без дубликати (Броколи / броколи) + брой пъти
   const lifetimeList = (() => {
     const byNorm = {};
-    Object.keys(lifetimeSolids).forEach(name => {
+
+    Object.entries(lifetimeSolids).forEach(([name, count]) => {
       if (!name) return;
-      const norm = name.trim().toLocaleLowerCase('bg-BG');
-      if (!norm) return;
-      // ако вече имаме нещо със същия norm, не го добавяме втори път
+      const trimmed = name.trim();
+      if (!trimmed) return;
+
+      const norm = trimmed.toLocaleLowerCase('bg-BG');
+      const c = Number(count) || 0;
+
       if (!byNorm[norm]) {
-        byNorm[norm] = name.trim();
+        byNorm[norm] = { name: trimmed, count: c };
+      } else {
+        byNorm[norm].count += c;
       }
     });
-    return Object.values(byNorm).sort((a, b) => a.localeCompare(b, 'bg-BG'));
-  })();
 
+    return Object.values(byNorm).sort((a, b) =>
+      a.name.localeCompare(b.name, 'bg-BG')
+    );
+  })();
 
   const lifetimeHtml = lifetimeList.length
     ? `<ul class="summary-foods">
-         ${lifetimeList.map(name => `<li><em>${name}</em></li>`).join('')}
+         ${lifetimeList
+           .map(item => `<li><em>${item.name}</em>${item.count ? ` (${item.count})` : ''}</li>`)
+           .join('')}
        </ul>`
     : '<p class="is-muted">Няма въведени храни.</p>';
 
@@ -323,7 +329,12 @@ const updateUI = list => {
 };
 
 
-window.del = id => deleteEntry(uid, id);
+window.del = async (id) => {
+  await deleteEntry(uid, id);
+  if (uid) {
+    rebuildLifetimeSolidsFromHistory(uid);
+  }
+};
 
 window.toggleEdit = async id => {
   const btn = event.target;
@@ -387,21 +398,10 @@ window.toggleEdit = async id => {
     updated.solids = solids;
     updated.solidsTotal = solids.reduce((a, s) => a + (Number(s.grams)||0), 0);
 
-    // update lifetime solids локално – пак само отделните продукти, не комбинацията
-    const seenParts = new Set();
-    solids.forEach(s => {
-      extractIngredients(s.name).forEach(p => {
-        if (!seenParts.has(p)) {
-          seenParts.add(p);
-          if (!lifetimeSolids[p]) {
-            lifetimeSolids[p] = true;
-          }
-        }
-      });
-    });
-    saveLifetimeSolids();
-
     await updateEntry(uid, id, updated);
+    if (uid) {
+      rebuildLifetimeSolidsFromHistory(uid);
+    }
   }
 };
 
@@ -562,21 +562,10 @@ els.form?.addEventListener('submit', async e => {
     ...(solids.length ? { solids, solidsTotal: pureeTotalGrams(solids) } : { solids: [], solidsTotal: 0 })
   };
 
-  // обновяваме lifetime solids – само отделни продукти
-  const seenParts = new Set();
-  solids.forEach(s => {
-    extractIngredients(s.name).forEach(p => {
-      if (!seenParts.has(p)) {
-        seenParts.add(p);
-        if (!lifetimeSolids[p]) {
-          lifetimeSolids[p] = true;
-        }
-      }
-    });
-  });
-  saveLifetimeSolids();
-
   await addEntry(uid, entry);
+  if (uid) {
+    rebuildLifetimeSolidsFromHistory(uid);
+  }
   els.form.reset();
   pureeItems = [];
   renderPureeList();
@@ -638,8 +627,6 @@ onAuthStateChanged(auth, user => {
     els.app.hidden  = false;
     els.date.value  = today();
 
-    // първо зареждаме всички стари храни от Firestore,
-    // после се закачаме за текущата дата
     rebuildLifetimeSolidsFromHistory(uid)
       .finally(() => {
         subscribeForCurrentDate();
