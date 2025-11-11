@@ -226,6 +226,22 @@ const updateUI = list => {
   els.table.innerHTML = sorted.map(render).join('');
 
   const feedsCount = sorted.length;
+const feedsCount = sorted.filter(e => {
+  const formula     = Number(e.formula)     || 0;
+  const breastmilk  = Number(e.breastmilk)  || 0;
+  const hasMilk     = formula > 0 || breastmilk > 0;
+
+  const hasSolids   = Array.isArray(e.solids) &&
+    e.solids.some(s => s && (Number(s.grams) || 0) > 0);
+
+  const hasBreastfeeding =
+    isTrue(e.breastfeeding) ||
+    (e.breastfeedingTime != null &&
+     e.breastfeedingTime !== '' &&
+     Number(e.breastfeedingTime) > 0);
+
+  return hasMilk || hasSolids || hasBreastfeeding;
+}).length;
 
   const sums = sorted.reduce((acc, e) => {
     acc.formula     += Number(e.formula)     || 0;
