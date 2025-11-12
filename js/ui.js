@@ -225,7 +225,6 @@ const updateUI = list => {
   const sorted = [...list].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
   els.table.innerHTML = sorted.map(render).join('');
 
-  const feedsCount = sorted.length;
 const feedsCount = sorted.filter(e => {
   const formula     = Number(e.formula)     || 0;
   const breastmilk  = Number(e.breastmilk)  || 0;
